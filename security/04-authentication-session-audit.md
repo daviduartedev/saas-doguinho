@@ -22,7 +22,7 @@ Senha inicial definida pelo Dono: risco de compartilhamento (WhatsApp). Residual
 
 Preferir sessão no servidor (cookie opaco) em vez de JWT com estoque no payload. Cookie: `HttpOnly`, `Secure`, `SameSite`. Identificador com RNG criptográfico (V11.5).
 
-**UNKNOWN de produto:** TTL idle/absolute (Q24). Na implementação, definir timeout finito e escrever o valor escolhido neste arquivo quando o código nascer.
+**UNKNOWN de produto:** TTL idle/absolute (Q24). **Default de implementação:** sessão absoluta de **12 horas** (`SESSION_TTL_MS` em `apps/web/src/doguinho/app.ts`). Sem idle timeout separado no MVP. Cookie opaco, `HttpOnly`, `Secure` em produção, `SameSite=Lax`.
 
 ## Término (V7.4)
 
