@@ -13,17 +13,30 @@ const ketchup: MantineColorsTuple = [
   "#870e13",
 ];
 
+const mustard: MantineColorsTuple = [
+  "#fff8e8",
+  "#fbeec0",
+  "#f6de8a",
+  "#f0cd54",
+  "#e8c02e",
+  "#e4ba26",
+  "#e0b322",
+  "#c49c1c",
+  "#a07e16",
+  "#7c6111",
+];
+
 export const doguinhoTheme = createTheme({
   primaryColor: "ketchup",
-  colors: { ketchup },
+  colors: { ketchup, mustard },
   fontFamily: "var(--font-text), sans-serif",
   headings: { fontFamily: "var(--font-display), sans-serif" },
   defaultRadius: "md",
   radius: {
-    xs: "6px",
-    sm: "6px",
-    md: "8px",
-    lg: "10px",
+    xs: "8px",
+    sm: "8px",
+    md: "10px",
+    lg: "12px",
     xl: "999px",
   },
   white: "#fffdf9",

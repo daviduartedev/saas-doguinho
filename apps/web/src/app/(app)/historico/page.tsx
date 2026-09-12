@@ -1,7 +1,7 @@
 import { AppShell } from "@/components/shell/app-shell";
 import { PageCanvas } from "@/components/ui/page-canvas";
 import { Pager } from "@/components/ui/pager";
-import { loadWorkspace } from "@/doguinho/workspace";
+import { loadWorkspace, shellFrom } from "@/doguinho/workspace";
 import { paginate } from "@/lib/pagination";
 
 export const dynamic = "force-dynamic";
@@ -12,14 +12,15 @@ export default async function HistoricoPage({
   searchParams: Promise<{ loja?: string; page?: string }>;
 }) {
   const { loja, page } = await searchParams;
-  const { actor, lojas, lojaId, snap, app, produtos } = await loadWorkspace(loja);
+  const workspace = await loadWorkspace(loja);
+  const { actor, lojas, lojaId, filtro, app, produtos } = workspace;
   const historico = lojaId ? await app.historico(actor, { lojaId }) : [];
   const listing = paginate(historico, page);
   const lojaNome = lojas.find((item) => item.id === lojaId)?.nome ?? "";
   const nomeProduto = (id: string) => produtos.find((produto) => produto.id === id)?.nome ?? id;
 
   return (
-    <AppShell lojas={lojas} lojaId={lojaId} actor={actor} status={snap?.status ?? null}>
+    <AppShell {...shellFrom(workspace)}>
       <PageCanvas>
         <header className="mb-6">
           <h1 className="font-display text-3xl font-bold text-ink">Histórico · {lojaNome}</h1>
@@ -33,7 +34,7 @@ export default async function HistoricoPage({
         ) : (
           <ol className="space-y-4">
             {listing.items.map((row) => (
-              <li key={row.submission.id} className="overflow-hidden rounded-md bg-sheet">
+              <li key={row.submission.id} className="listing-frame bg-sheet">
                 <div className="listing-pad flex flex-wrap items-baseline justify-between gap-2">
                   <p className="font-semibold">
                     {row.submission.tipo === "correcao" ? "Correção" : "Fechamento"} · {row.usuarioNome}
@@ -81,7 +82,7 @@ export default async function HistoricoPage({
           pathname="/historico"
           page={listing.page}
           totalPages={listing.totalPages}
-          params={{ loja: lojaId }}
+          params={{ loja: filtro }}
         />
       </PageCanvas>
     </AppShell>

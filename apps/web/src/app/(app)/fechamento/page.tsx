@@ -1,6 +1,6 @@
 import { FechamentoForm } from "@/components/fechamento/fechamento-form";
 import { AppShell } from "@/components/shell/app-shell";
-import { loadWorkspace } from "@/doguinho/workspace";
+import { loadWorkspace, shellFrom } from "@/doguinho/workspace";
 
 export const dynamic = "force-dynamic";
 
@@ -10,11 +10,12 @@ export default async function FechamentoPage({
   searchParams: Promise<{ loja?: string }>;
 }) {
   const { loja } = await searchParams;
-  const { actor, lojas, lojaId, snap, produtos, linhas } = await loadWorkspace(loja);
+  const workspace = await loadWorkspace(loja);
+  const { lojas, lojaId, snap, produtos, linhas } = workspace;
   const lojaNome = lojas.find((item) => item.id === lojaId)?.nome ?? "Loja";
 
   return (
-    <AppShell lojas={lojas} lojaId={lojaId} actor={actor} status={snap?.status ?? null}>
+    <AppShell {...shellFrom(workspace)}>
       {lojaId && snap ? (
         <FechamentoForm
           lojaId={lojaId}

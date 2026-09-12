@@ -38,9 +38,9 @@ const config: Config = {
         },
       },
       borderRadius: {
-        sm: "6px",
-        md: "8px",
-        lg: "10px",
+        sm: "8px",
+        md: "10px",
+        lg: "12px",
       },
       fontFamily: {
         sans: ["var(--font-text)", "ui-sans-serif", "system-ui"],

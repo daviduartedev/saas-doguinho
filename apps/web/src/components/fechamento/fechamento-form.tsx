@@ -103,6 +103,7 @@ export function FechamentoForm({
         </p>
       ) : null}
 
+      <div className="listing-frame">
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr className="bg-ketchup text-white">
@@ -122,6 +123,7 @@ export function FechamentoForm({
           ))}
         </tbody>
       </table>
+      </div>
       <ClientPager
         page={safePage}
         totalPages={totalPages}

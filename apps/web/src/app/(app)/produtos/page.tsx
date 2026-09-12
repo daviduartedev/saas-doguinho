@@ -10,7 +10,7 @@ import {
 } from "@/doguinho/admin-actions";
 import { actorCan } from "@/doguinho/view";
 import { UNIDADES } from "@/doguinho/types";
-import { loadWorkspace } from "@/doguinho/workspace";
+import { loadWorkspace, shellFrom } from "@/doguinho/workspace";
 import { Pager } from "@/components/ui/pager";
 import { paginate } from "@/lib/pagination";
 import { redirect } from "next/navigation";
@@ -23,12 +23,13 @@ export default async function ProdutosPage({
   searchParams: Promise<{ loja?: string; page?: string }>;
 }) {
   const { loja, page } = await searchParams;
-  const { actor, lojas, lojaId, snap, produtos } = await loadWorkspace(loja);
+  const workspace = await loadWorkspace(loja);
+  const { actor, filtro, produtos } = workspace;
   const listing = paginate(produtos, page);
   if (!actorCan(actor, "manage_produto")) redirect("/fechamento");
 
   return (
-    <AppShell lojas={lojas} lojaId={lojaId} actor={actor} status={snap?.status ?? null}>
+    <AppShell {...shellFrom(workspace)}>
       <PageCanvas>
         <header>
           <h1 className="font-display text-3xl font-bold text-ink">Produtos</h1>
@@ -37,7 +38,7 @@ export default async function ProdutosPage({
           </p>
         </header>
 
-        <form action={criarProdutoAction} className="listing-pad grid gap-3 rounded-md bg-sheet sm:grid-cols-[1fr_8rem_auto]">
+        <form action={criarProdutoAction} className="listing-pad grid gap-3 rounded-lg border border-border bg-sheet sm:grid-cols-[1fr_8rem_auto]">
           <div>
             <Label htmlFor="nome">Nome</Label>
             <Input id="nome" name="nome" required className="mt-1" />
@@ -61,7 +62,7 @@ export default async function ProdutosPage({
           </div>
         </form>
 
-        <div>
+        <div className="listing-frame">
           <div className="grid grid-cols-1 bg-ketchup text-white sm:grid-cols-[minmax(12rem,1fr)_10rem_7rem_auto]">
             <div className="listing-cell font-semibold">Produto</div>
             <div className="listing-cell hidden font-semibold sm:block">Unidade</div>
@@ -116,7 +117,7 @@ export default async function ProdutosPage({
           pathname="/produtos"
           page={listing.page}
           totalPages={listing.totalPages}
-          params={{ loja: lojaId }}
+          params={{ loja: filtro }}
         />
       </PageCanvas>
     </AppShell>

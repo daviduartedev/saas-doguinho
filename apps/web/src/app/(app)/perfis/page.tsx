@@ -5,7 +5,7 @@ import { PerfisFicha } from "@/components/perfis/perfis-ficha";
 import { countPermissionsOn } from "@/components/perfis/labels";
 import { PageCanvas } from "@/components/ui/page-canvas";
 import { ALL_PERMISSIONS } from "@/doguinho/seed";
-import { loadWorkspace } from "@/doguinho/workspace";
+import { loadWorkspace, shellFrom } from "@/doguinho/workspace";
 import { Pager } from "@/components/ui/pager";
 import { paginate } from "@/lib/pagination";
 import { redirect } from "next/navigation";
@@ -18,16 +18,17 @@ export default async function PerfisPage({
   searchParams: Promise<{ loja?: string; page?: string; novo?: string; editar?: string }>;
 }) {
   const { loja, page, novo, editar } = await searchParams;
-  const { actor, lojas, lojaId, snap, app } = await loadWorkspace(loja);
+  const workspace = await loadWorkspace(loja);
+  const { actor, filtro, app } = workspace;
   if (!actor.isDono) redirect("/fechamento");
   const perfis = await app.listarPerfis(actor);
   const listing = paginate(perfis, page);
   const editando = editar ? (perfis.find((item) => item.id === editar) ?? null) : null;
   const mostrarFicha = Boolean(editando) || novo === "1";
-  const novoHref = lojaId ? `/perfis?loja=${lojaId}&novo=1` : "/perfis?novo=1";
+  const novoHref = filtro ? `/perfis?loja=${filtro}&novo=1` : "/perfis?novo=1";
 
   return (
-    <AppShell lojas={lojas} lojaId={lojaId} actor={actor} status={snap?.status ?? null}>
+    <AppShell {...shellFrom(workspace)}>
       <PageCanvas>
         <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
@@ -45,17 +46,17 @@ export default async function PerfisPage({
           </Link>
         </header>
 
-        {mostrarFicha ? <PerfisFicha perfil={editando} lojaId={lojaId} /> : null}
+        {mostrarFicha ? <PerfisFicha perfil={editando} lojaId={filtro} /> : null}
 
-        <div>
+        <div className="listing-frame">
           <div className="grid grid-cols-[minmax(10rem,1fr)_8rem_auto] bg-ketchup text-white">
             <div className="listing-cell font-semibold">Perfil</div>
             <div className="listing-cell font-semibold">Ligadas</div>
             <div className="listing-cell text-right font-semibold">Ações</div>
           </div>
           {listing.items.map((perfil) => {
-            const href = lojaId
-              ? `/perfis?loja=${lojaId}&editar=${perfil.id}`
+            const href = filtro
+              ? `/perfis?loja=${filtro}&editar=${perfil.id}`
               : `/perfis?editar=${perfil.id}`;
             return (
               <div
@@ -89,7 +90,7 @@ export default async function PerfisPage({
           pathname="/perfis"
           page={listing.page}
           totalPages={listing.totalPages}
-          params={{ loja: lojaId }}
+          params={{ loja: filtro }}
         />
       </PageCanvas>
     </AppShell>

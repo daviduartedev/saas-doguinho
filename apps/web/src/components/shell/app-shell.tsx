@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   LogOut,
   Package,
+  Settings,
   Shield,
   Store,
   Users,
@@ -30,6 +31,7 @@ function navItems(actor: Actor) {
     { href: "/produtos", label: "Produtos", icon: Package, show: actorCan(actor, "manage_produto") },
     { href: "/usuarios", label: "Usuários", icon: Users, show: actorCan(actor, "manage_users") },
     { href: "/perfis", label: "Perfis", icon: Shield, show: actor.isDono },
+    { href: "/configuracoes", label: "Configurações", icon: Settings, show: actor.isDono },
   ];
   return items.filter((item) => item.show);
 }
@@ -102,6 +104,7 @@ export function AppShell({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="todas">Todas as Lojas</SelectItem>
                   {lojas.map((loja) => (
                     <SelectItem key={loja.id} value={loja.id}>
                       {loja.nome}

@@ -10,7 +10,7 @@ import { criarProdutoAction } from "@/doguinho/admin-actions";
 import type { EstoqueView } from "@/doguinho/types";
 import { UNIDADES } from "@/doguinho/types";
 import { actorCan } from "@/doguinho/view";
-import { loadWorkspace } from "@/doguinho/workspace";
+import { loadWorkspace, shellFrom } from "@/doguinho/workspace";
 import { paginate, parseListingQuery } from "@/lib/pagination";
 
 export const dynamic = "force-dynamic";
@@ -21,7 +21,8 @@ export default async function EstoquePage({
   searchParams: Promise<{ loja?: string; page?: string; per?: string; q?: string; novo?: string }>;
 }) {
   const { loja, page, per, q, novo } = await searchParams;
-  const { actor, lojas, lojaId, snap, produtos, app } = await loadWorkspace(loja);
+  const workspace = await loadWorkspace(loja);
+  const { actor, lojas, filtro, produtos, app } = workspace;
   const query = parseListingQuery(q);
   const ativos = produtos.filter(
     (produto) =>
@@ -37,7 +38,7 @@ export default async function EstoquePage({
   const mostrarNovo = novo === "1" && podeGerir;
 
   return (
-    <AppShell lojas={lojas} lojaId={lojaId} actor={actor} status={snap?.status ?? null}>
+    <AppShell {...shellFrom(workspace)}>
       <PageCanvas>
         <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
@@ -46,13 +47,13 @@ export default async function EstoquePage({
               Número oficial = quantidade restante do último Fechamento enviado. Rascunho não conta.
             </p>
           </div>
-          <EstoqueToolbar lojaId={lojaId} query={query} podeGerir={podeGerir} />
+          <EstoqueToolbar lojaId={filtro} query={query} podeGerir={podeGerir} />
         </header>
 
         {mostrarNovo ? (
           <form
             action={criarProdutoAction}
-            className="listing-pad grid gap-3 rounded-md bg-sheet sm:grid-cols-[1fr_8rem_auto]"
+            className="listing-pad grid gap-3 rounded-lg border border-border bg-sheet sm:grid-cols-[1fr_8rem_auto]"
           >
             <div>
               <Label htmlFor="nome">Nome</Label>
@@ -82,7 +83,9 @@ export default async function EstoquePage({
           <p className="text-sm text-steam">Sem Loja no Vínculo.</p>
         ) : (
           <div>
-            <EstoqueTabela visao={visao} produtos={listing.items} podeGerir={podeGerir} />
+            <div className="listing-frame">
+              <EstoqueTabela visao={visao} produtos={listing.items} podeGerir={podeGerir} />
+            </div>
             <ListingPager
               pathname="/estoque"
               page={listing.page}
@@ -91,7 +94,7 @@ export default async function EstoquePage({
               size={listing.size}
               from={listing.from}
               to={listing.to}
-              params={{ loja: lojaId, q: query || undefined, per: String(listing.size) }}
+              params={{ loja: filtro, q: query || undefined, per: String(listing.size) }}
               noun="produtos"
             />
           </div>
