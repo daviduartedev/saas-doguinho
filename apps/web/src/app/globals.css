@@ -1,0 +1,125 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ketchup: #e31c23;
+  --ketchup-hot: #ff2a31;
+  --ketchup-deep: #c4161c;
+  --mustard: #e0b322;
+  --feather: #f3c84a;
+  --paper: #f4f0ea;
+  --sheet: #fffdf9;
+  --ink: #241710;
+  --ink-soft: #4a3b33;
+  --steam: #8b7f76;
+  --counter: #e7e0d6;
+  --awning: #e31c23;
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: var(--sheet);
+  --card-foreground: var(--ink);
+  --primary: var(--ketchup);
+  --primary-foreground: #fffdf9;
+  --muted: var(--counter);
+  --muted-foreground: var(--steam);
+  --border: #ddd4c8;
+  --ring: var(--ketchup);
+  --destructive: var(--ketchup);
+  --destructive-foreground: #fffdf9;
+  --control: #efe8de;
+  --radius: 8px;
+  --page-gutter: 1.5rem;
+  --listing-px: 1.25rem;
+  --listing-py: 0.875rem;
+  --sidebar: 272px;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.page-gutter {
+  padding-left: var(--page-gutter);
+  padding-right: var(--page-gutter);
+}
+
+.listing-cell {
+  padding: var(--listing-py) var(--listing-px);
+}
+
+.listing-pad {
+  padding: var(--listing-py) var(--listing-px);
+}
+
+@media (min-width: 768px) {
+  :root {
+    --page-gutter: 2.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --page-gutter: 3rem;
+  }
+}
+
+.skeleton {
+  border-radius: 8px;
+  background: var(--counter);
+  animation: steam 1.2s ease-in-out infinite;
+}
+
+@keyframes steam {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.88;
+  }
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.mantine-Pagination-control {
+  font-weight: 600;
+  color: var(--ink);
+  border-color: var(--border);
+  background: var(--sheet);
+}
+
+.mantine-Pagination-control[data-active] {
+  background: var(--ketchup);
+  border-color: var(--ketchup);
+  color: #fffdf9;
+}
+
+.pena {
+  width: 9px;
+  height: 22px;
+  clip-path: path(
+    "M4.5 0 C7 3 9 8 8.2 13 C7.6 17 6 20 4.5 22 C3 20 1.4 17 0.8 13 C0 8 2 3 4.5 0 Z"
+  );
+  background: var(--feather);
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

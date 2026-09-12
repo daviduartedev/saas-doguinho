@@ -16,7 +16,7 @@ O mesmo para Produto, Fechamento, histórico, usuário: o id tem de pertencer à
 
 ## Onde autorizar (V8.3)
 
-Camada de servidor (Route Handler, Server Action, query). Não só middleware de página. Alterar Perfil ou desligar usuário vale no **próximo** request — a sessão não cacheia um “é Dono” eterno no cliente.
+Camada de servidor (Route Handler, Server Action, query). Não só middleware de página. Alterar Perfil ou desligar usuário vale no **próximo** request. A sessão não cacheia um “é Dono” eterno no cliente.
 
 ## Organização (V8.4)
 

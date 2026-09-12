@@ -1,4 +1,4 @@
-# Doguinho do Corujá – Product Research
+# Doguinho do Corujá: Product Research
 
 Pesquisa congelada em 2026-09-10. Refinamentos posteriores podem alterar premissas marcadas como **ASSUMPTION** ou **UNKNOWN**. Itens **CONFIRMED** foram respondidos no grill.
 
@@ -164,7 +164,7 @@ Cadeia: **Usuário → Dono ou Perfil → Organização → Vínculo (Lojas) →
 
 ## 12. Permission Matrix
 
-Legenda: **C** = CONFIRMED · **A** = ASSUMPTION (default de trabalho) · **—** = não aplica
+Legenda: **C** = CONFIRMED · **A** = ASSUMPTION (default de trabalho) · **n/a** = não aplica
 
 | Recurso | Ação | Dono | Operador (perfil típico) | Perfil custom |
 |---------|------|------|--------------------------|---------------|
@@ -201,7 +201,7 @@ Legenda: **C** = CONFIRMED · **A** = ASSUMPTION (default de trabalho) · **—*
 
 - Estoque = quantidade restante do último Fechamento/Correção enviado.
 - Independente por Loja.
-- 0 é quantidade possível na operação (item acabou) — **ASSUMPTION (Q27)** elevada a default de trabalho.
+- 0 é quantidade possível na operação (item acabou). **ASSUMPTION (Q27)** elevada a default de trabalho.
 - Negativo recusado. **ASSUMPTION (Q27)**
 - Enviar com item ativo vazio bloqueia o Fechamento inteiro. **ASSUMPTION (Q27)**
 - kg/L: até 3 casas decimais; unidade/pacote: inteiro. **ASSUMPTION (Q27)**
@@ -234,7 +234,7 @@ Legenda: **C** = CONFIRMED · **A** = ASSUMPTION (default de trabalho) · **—*
 | Usuário | Dono (e Perfil com checkbox, A) | Dono | Dono (desligar) | Desligar, não apagar | Organização |
 | Perfil | Dono | Dono | Dono | UNKNOWN se há usuários nele | Organização |
 | Produto | Dono (checkbox A) | Quem fecha / Dono | Dono | Desativar | Organização |
-| Estoque | Derivado do Fechamento | Conforme matriz | Só via Fechamento/Correção | — | Loja |
+| Estoque | Derivado do Fechamento | Conforme matriz | Só via Fechamento/Correção | n/a | Loja |
 | Rascunho | Implícito no dia | Quem pode fechar a Loja | Autosave | Some ao enviar ou no virar do dia (A) | Loja |
 | Fechamento | Quem tem permissão na Loja | Histórico | Imutável | Proibido | Loja |
 | Correção | Quem tem permissão, mesmo dia | Histórico | Imutável | Proibido | Loja |
@@ -645,14 +645,14 @@ Status: **CONFIRMED**
 ## 25. Remaining Questions
 
 1. Recuperação de senha, TTL de sessão, segundo Dono, sessões simultâneas (Q24).
-2. Quais checkboxes um Perfil pode receber de fato (Q25) — default documentado como ASSUMPTION.
+2. Quais checkboxes um Perfil pode receber de fato (Q25): default documentado como ASSUMPTION.
 3. Widget D (produtos em zero) no dashboard.
-4. Casas decimais e teto numérico — default ASSUMPTION.
+4. Casas decimais e teto numérico: default ASSUMPTION.
 5. Nome único de Produto; momento em que Produto novo entra no Fechamento do dia.
 6. Desativar Loja.
 7. Retenção de histórico / LGPD (base legal, prazo).
 8. Fuso horário do “dia calendário” (ASSUMPTION: America/Sao_Paulo).
-9. Política de senha (tamanho mínimo) — não grillada; seguir ASVS na implementação.
+9. Política de senha (tamanho mínimo): não grillada; seguir ASVS na implementação.
 10. Lista completa de Produtos além dos nove exemplos.
 
 ## 26. Assumptions
