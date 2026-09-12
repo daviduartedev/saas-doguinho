@@ -3,24 +3,29 @@
 import { expect, test, type Page } from "@playwright/test";
 import { loginDono } from "../helpers";
 
-/** /produtos é paginado (8/pág.) e o item novo cai na ÚLTIMA página (ordem de
- *  inserção). A página streama (RSC) — esperar a lista antes de ler o pager. */
+/** /produtos é paginado (8/pág.). Memory store lista por inserção; Postgres
+ *  ordena por nome — o item novo não cai necessariamente na última página. */
 async function linhaProduto(page: Page, nome: string) {
   const linha = page.locator(`form:has(input[value="${nome}"])`).first();
   await expect(async () => {
     await page.goto("/produtos");
-    await page.waitForLoadState("networkidle");
-    let ultima = 1;
+    await expect(page.getByRole("heading", { name: "Produtos" })).toBeVisible();
+    const paginas = new Set<number>([1]);
     const pag = page.getByRole("navigation", { name: "Paginação" });
     if (await pag.count()) {
-      const numeros = (await pag.getByRole("button").allInnerTexts())
-        .map((t) => Number.parseInt(t, 10))
-        .filter((n) => !Number.isNaN(n));
-      ultima = Math.max(1, ...numeros);
+      for (const texto of await pag.getByRole("button").allInnerTexts()) {
+        const n = Number.parseInt(texto, 10);
+        if (!Number.isNaN(n)) paginas.add(n);
+      }
     }
-    await page.goto(`/produtos?page=${ultima}`);
-    await page.waitForLoadState("networkidle");
-    if (!(await linha.count())) throw new Error(`produto ainda não apareceu: ${nome}`);
+    for (const n of [...paginas].sort((a, b) => a - b)) {
+      if (n !== 1) {
+        await page.goto(`/produtos?page=${n}`);
+        await expect(page.getByRole("heading", { name: "Produtos" })).toBeVisible();
+      }
+      if ((await linha.count()) > 0) return;
+    }
+    throw new Error(`produto ainda não apareceu: ${nome}`);
   }).toPass({ timeout: 20_000 });
   return linha;
 }
