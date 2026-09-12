@@ -1,5 +1,6 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import postgres from "postgres";
+import { ConflictError } from "./errors";
 import type { Loja, Perfil, Produto, Submission } from "./types";
 import type { StoredEstoque, StoredRascunho, StoredUser, Store } from "./store";
 import { normalizeEmail, normalizeName } from "./store";
@@ -94,7 +95,15 @@ export async function createPostgresStore(url: string): Promise<Store> {
     },
 
     async insertUser(row) {
-      await db()`INSERT INTO users (id, organization_id, email, nome, is_dono, disabled, perfil_id, password_hash) VALUES (${row.id}, ${row.organizationId}, ${normalizeEmail(row.email)}, ${row.nome}, ${row.isDono}, ${row.disabled}, ${row.perfilId}, ${row.passwordHash})`;
+      try {
+        await db()`INSERT INTO users (id, organization_id, email, nome, is_dono, disabled, perfil_id, password_hash) VALUES (${row.id}, ${row.organizationId}, ${normalizeEmail(row.email)}, ${row.nome}, ${row.isDono}, ${row.disabled}, ${row.perfilId}, ${row.passwordHash})`;
+      } catch (error) {
+        // QA-008: a unique index é o backstop da corrida; a violação vira erro de domínio.
+        if ((error as { code?: string }).code === "23505") {
+          throw new ConflictError("Já existe um usuário com esse e-mail.");
+        }
+        throw error;
+      }
     },
     async updateUser(id, patch) {
       const rows = await db()`SELECT id, organization_id, email, nome, is_dono, disabled, perfil_id, password_hash FROM users WHERE id = ${id}`;
@@ -242,6 +251,8 @@ async function migrate(sql: Sql) {
       perfil_id TEXT REFERENCES perfis(id),
       password_hash TEXT NOT NULL
     )`;
+  // QA-008: e-mail único por Organização enforced pelo banco (backstop da corrida).
+  await sql`CREATE UNIQUE INDEX IF NOT EXISTS users_org_email_key ON users (organization_id, email)`;
   await sql`CREATE TABLE IF NOT EXISTS vinculos (
       user_id TEXT NOT NULL REFERENCES users(id),
       loja_id TEXT NOT NULL REFERENCES lojas(id),

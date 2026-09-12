@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "prototype": "next dev --turbopack",
-    "build": "next build",
+    "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
@@ -31,6 +31,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
+    "@playwright/test": "^1.63.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.18.1",
     "@types/react": "^19.1.12",

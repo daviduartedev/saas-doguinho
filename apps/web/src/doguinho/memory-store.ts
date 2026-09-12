@@ -1,3 +1,4 @@
+import { ConflictError } from "./errors";
 import type { Loja, Perfil, Produto, Submission } from "./types";
 import type {
   StoredEstoque,
@@ -108,7 +109,14 @@ export function createMemoryStore(): Store {
     },
 
     async insertUser(row) {
-      users.set(row.id, { ...row, email: normalizeEmail(row.email) });
+      // QA-008: unicidade de e-mail é enforced AQUI, sem await entre checar e
+      // inserir — a janela de corrida do check-then-insert na camada app some.
+      const email = normalizeEmail(row.email);
+      const duplicado = [...users.values()].some(
+        (user) => user.organizationId === row.organizationId && user.email === email,
+      );
+      if (duplicado) throw new ConflictError("Já existe um usuário com esse e-mail.");
+      users.set(row.id, { ...row, email });
     },
     async updateUser(id, patch) {
       const atual = users.get(id);

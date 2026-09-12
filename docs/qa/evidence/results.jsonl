@@ -125,3 +125,7 @@
 {"at":"2026-09-12T19:16:22.236Z","scenario":"BREAK-09","verdict":"FAIL","note":"QA-009 repro 2: criar Loja pela UI → crash=true mas Loja criada=true (redirect() dentro do try → fail() sempre)","evidence":"breakit/qa-009-crash-apos-criar-loja.png"}
 {"at":"2026-09-12T19:16:22.238Z","scenario":"BREAK-14","verdict":"FAIL","note":"CORRIGIDO: corrida criou 2 usuários com race@doguinho.local (pág.1) e 2 com race2@doguinho.local (pág.2) — check-then-insert sobre bcrypt lento, sem UNIQUE. Reproduzido 2×. (contagem anterior 8/6 era artefato de clamp de paginação)","evidence":""}
 {"at":"2026-09-12T19:16:22.238Z","scenario":"BREAK-09","verdict":"FAIL","note":"CORRIGIDO: 10k nome de Loja ACEITO e persistido (sem limite server-side); resposta 500 pelo bug do redirect (QA-009). Emoji/RTL aceitos e renderizam OK.","evidence":""}
+{"at":"2026-09-12T19:20:44.662Z","scenario":"QA-002-fix","verdict":"FAIL","note":"cookie lixo → status=undefined url=about:blank (esperado 200 em /entrar, sem loop)","evidence":""}
+{"at":"2026-09-12T19:20:46.568Z","scenario":"QA-002-fix","verdict":"FAIL","note":"/entrar c/ cookie lixo → url=about:blank; cookie limpo=false","evidence":""}
+{"at":"2026-09-12T19:22:28.496Z","scenario":"QA-002-fix","verdict":"PASS","note":"cookie lixo → status=200 url=http://localhost:3000/entrar (esperado 200 em /entrar, sem loop)","evidence":""}
+{"at":"2026-09-12T19:22:30.127Z","scenario":"QA-002-fix","verdict":"PASS","note":"/entrar c/ cookie lixo → url=http://localhost:3000/entrar; cookie limpo=true","evidence":""}

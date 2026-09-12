@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { AppError, ValidationError } from "./errors";
+import { isAppError, ValidationError } from "./errors";
 import { ALL_PERMISSIONS } from "./seed";
 import { getApp } from "./runtime";
 import { exigirActor } from "./sessao";
@@ -10,7 +10,7 @@ import type { UnidadeMedida } from "./types";
 import { UNIDADES } from "./types";
 
 function fail(error: unknown): never {
-  throw error instanceof AppError ? error : new Error("Não foi possível salvar.");
+  throw isAppError(error) ? error : new Error("Não foi possível salvar.");
 }
 
 function voltarPerfis(formData: FormData): never {
@@ -27,12 +27,13 @@ export async function criarLojaAction(formData: FormData): Promise<void> {
     revalidatePath("/configuracoes");
     revalidatePath("/dashboard");
     revalidatePath("/estoque");
-    const loja = String(formData.get("loja") ?? "");
-    if (/^[a-zA-Z0-9_-]+$/.test(loja)) redirect(`/configuracoes?loja=${loja}`);
-    redirect("/configuracoes");
   } catch (error) {
     fail(error);
   }
+  // redirect() lança NEXT_REDIRECT — precisa ficar FORA do try para não virar fail() (QA-009)
+  const loja = String(formData.get("loja") ?? "");
+  if (/^[a-zA-Z0-9_-]+$/.test(loja)) redirect(`/configuracoes?loja=${loja}`);
+  redirect("/configuracoes");
 }
 
 export async function criarProdutoAction(formData: FormData): Promise<void> {
