@@ -72,7 +72,7 @@ export function DashboardPanel({ model }: { model: DashboardModel }) {
         ) : null}
       </header>
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="kpi-grid">
         {kpis.map((kpi) => (
           <Card key={kpi.title}>
             <CardHeader>
@@ -91,12 +91,12 @@ export function DashboardPanel({ model }: { model: DashboardModel }) {
       </section>
 
       <Card>
-        <CardHeader className="flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <CardHeader className="flex-col items-stretch gap-3">
           <div>
             <h2 className="font-display text-lg font-bold text-ink">Entradas e saídas</h2>
             <p className="mt-1 text-sm text-steam">Total no recorte de {days} dias</p>
           </div>
-          <div className="flex overflow-hidden rounded-md border border-border">
+          <div className="flex flex-wrap overflow-hidden rounded-md border border-border">
             {PERIODS.map((period) => (
               <button
                 key={period.days}
@@ -112,8 +112,8 @@ export function DashboardPanel({ model }: { model: DashboardModel }) {
             ))}
           </div>
         </CardHeader>
-        <CardContent className="pt-4">
-          <ChartContainer config={chartConfig} className="h-[280px]">
+        <CardContent className="min-w-0 pt-4">
+          <ChartContainer config={chartConfig} className="h-[280px] w-full min-w-0">
             <AreaChart data={series} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
               <defs>
                 <linearGradient id="fillEntradas" x1="0" y1="0" x2="0" y2="1">

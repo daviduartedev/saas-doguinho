@@ -1,10 +1,9 @@
-import { AppShell } from "@/components/shell/app-shell";
 import { PageCanvas } from "@/components/ui/page-canvas";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { criarLojaAction } from "@/doguinho/admin-actions";
-import { loadWorkspace, shellFrom } from "@/doguinho/workspace";
+import { loadWorkspace } from "@/doguinho/workspace";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -15,12 +14,11 @@ export default async function ConfiguracoesPage({
   searchParams: Promise<{ loja?: string }>;
 }) {
   const { loja } = await searchParams;
-  const workspace = await loadWorkspace(loja);
+  const workspace = await loadWorkspace(loja, { produtos: false, lojaState: false });
   if (!workspace.actor.isDono) redirect("/fechamento");
 
   return (
-    <AppShell {...shellFrom(workspace)}>
-      <PageCanvas>
+    <PageCanvas>
         <header>
           <h1 className="font-display text-3xl font-bold text-ink">Configurações</h1>
           <p className="mt-2 max-w-xl text-sm text-steam">
@@ -52,7 +50,6 @@ export default async function ConfiguracoesPage({
             </ul>
           )}
         </section>
-      </PageCanvas>
-    </AppShell>
+    </PageCanvas>
   );
 }

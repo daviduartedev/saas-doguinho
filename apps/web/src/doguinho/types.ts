@@ -120,6 +120,7 @@ export type Dashboard = {
   semFechamentoHoje: Loja[];
   estoque: EstoqueView[];
   recentes: HistoryRow[];
+  historicos: { loja: Loja; rows: HistoryRow[] }[];
 };
 
 export type Clock = {

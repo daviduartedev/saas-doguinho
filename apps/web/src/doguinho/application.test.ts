@@ -444,6 +444,7 @@ describe("Doguinho application", () => {
     await expect(app.dashboard(op)).rejects.toBeInstanceOf(ForbiddenError);
     const dash = await app.dashboard(dono);
     expect(dash.recentes[0].submission.tipo).toBe("fechamento");
+    expect(dash.historicos.length).toBeGreaterThan(0);
     expect(dash).not.toHaveProperty("vendas");
   });
 

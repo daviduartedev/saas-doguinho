@@ -1,43 +1,55 @@
-import type { Actor, FechamentoStatus, Loja } from "./types";
+import { cache } from "react";
+import type { DoguinhoApp } from "./app";
+import type { Actor, EstoqueView, Loja, Produto, QuantidadeLinha } from "./types";
 import { getApp } from "./runtime";
 import { exigirActor } from "./sessao";
+import { FILTRO_TODAS, resolveLojaFiltro } from "./workspace-filtro";
 
-export const FILTRO_TODAS = "todas";
+export { FILTRO_TODAS, resolveLojaFiltro } from "./workspace-filtro";
 
-export function resolveLojaFiltro(lojaParam: string | undefined, lojaIds: string[]): string {
-  // ASVS 5.1.1: allowlist query param against known Loja ids
-  if (!lojaParam || lojaParam === FILTRO_TODAS) return FILTRO_TODAS;
-  return lojaIds.includes(lojaParam) ? lojaParam : FILTRO_TODAS;
-}
+export type WorkspaceNeeds = {
+  produtos?: boolean;
+  lojaState?: boolean;
+};
 
-export async function loadWorkspace(lojaParam?: string) {
+/** One session+lojas trip per RSC request. Layout and the page share it on Vercel. */
+export const loadChrome = cache(async () => {
   const actor = await exigirActor();
   const app = await getApp();
   const lojas = await app.listarLojas(actor);
-  const produtos = await app.listarProdutos(actor);
+  return { actor, app, lojas };
+});
+
+export async function assembleWorkspace(
+  app: DoguinhoApp,
+  actor: Actor,
+  lojas: Loja[],
+  lojaParam: string | undefined,
+  needs: { produtos: boolean; lojaState: boolean },
+) {
   const filtro = resolveLojaFiltro(
     lojaParam,
     lojas.map((loja) => loja.id),
   );
   const lojaId = filtro === FILTRO_TODAS ? (lojas[0]?.id ?? "") : filtro;
-  if (!lojaId) {
-    return { actor, lojas, lojaId: "", filtro, snap: null, produtos, linhas: [], app };
-  }
-  const snap = await app.estoqueDaLoja(actor, lojaId);
-  const linhas = await app.rascunhoDoDia(actor, lojaId);
+
+  const produtosPromise: Promise<Produto[]> = needs.produtos
+    ? app.listarProdutos(actor)
+    : Promise.resolve([]);
+  const statePromise: Promise<[EstoqueView | null, QuantidadeLinha[]]> =
+    needs.lojaState && lojaId
+      ? Promise.all([app.estoqueDaLoja(actor, lojaId), app.rascunhoDoDia(actor, lojaId)])
+      : Promise.resolve([null, []]);
+
+  const [produtos, [snap, linhas]] = await Promise.all([produtosPromise, statePromise]);
+
   return { actor, lojas, lojaId, filtro, snap, produtos, linhas, app };
 }
 
-export function shellFrom(workspace: {
-  actor: Actor;
-  lojas: Loja[];
-  filtro: string;
-  snap: { status: FechamentoStatus } | null;
-}) {
-  return {
-    lojas: workspace.lojas,
-    lojaId: workspace.lojas.length === 0 ? "" : workspace.filtro,
-    actor: workspace.actor,
-    status: workspace.filtro === FILTRO_TODAS ? null : (workspace.snap?.status ?? null),
-  };
+export async function loadWorkspace(lojaParam?: string, needs?: WorkspaceNeeds) {
+  const { actor, app, lojas } = await loadChrome();
+  return assembleWorkspace(app, actor, lojas, lojaParam, {
+    produtos: needs?.produtos ?? true,
+    lojaState: needs?.lojaState ?? true,
+  });
 }

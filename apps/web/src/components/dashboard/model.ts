@@ -1,5 +1,5 @@
 import type { HistoryRow, Loja, Produto } from "@/doguinho/types";
-import { FILTRO_TODAS } from "@/doguinho/workspace";
+import { FILTRO_TODAS } from "@/doguinho/workspace-filtro";
 
 export type DayPoint = {
   day: string;

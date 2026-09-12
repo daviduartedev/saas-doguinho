@@ -12,15 +12,15 @@ export function EstoqueToolbar({
   podeGerir: boolean;
 }) {
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-      <form action="/estoque" method="get" className="relative">
+    <div className="flex flex-wrap items-center gap-3">
+      <form action="/estoque" method="get" className="relative min-w-[12rem] flex-1">
         <input type="hidden" name="loja" value={lojaId} />
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-steam" />
         <Input
           name="q"
           defaultValue={query}
           placeholder="Buscar produto..."
-          className="h-10 w-full bg-sheet pl-9 sm:w-[16rem]"
+          className="h-10 w-full max-w-xs bg-sheet pl-9"
         />
       </form>
       {podeGerir ? (

@@ -79,14 +79,14 @@ export function ListingPager({
   return (
     <nav
       aria-label="Paginação"
-      className="flex flex-col gap-3 pt-5 text-sm sm:flex-row sm:items-center sm:justify-between"
+      className="flex flex-wrap items-center justify-between gap-3 pt-5 text-sm"
     >
       {compact ? null : (
         <p className="text-steam">
           Mostrando {from} a {to} de {total} {noun}
         </p>
       )}
-      <div className="flex flex-wrap items-center gap-3 sm:ml-auto">
+      <div className="flex flex-wrap items-center gap-3">
         {compact ? null : (
           <label className="flex items-center gap-2 text-steam">
             <select
@@ -140,7 +140,7 @@ export function ClientPager({
   return (
     <nav
       aria-label="Paginação"
-      className="flex flex-col gap-3 pt-4 text-sm sm:flex-row sm:items-center sm:justify-between"
+      className="flex flex-wrap items-center justify-between gap-3 pt-4 text-sm"
     >
       {from !== null && to !== null && total !== undefined ? (
         <p className="text-steam">
@@ -148,7 +148,7 @@ export function ClientPager({
         </p>
       ) : null}
       {totalPages > 1 ? (
-        <Pagination total={totalPages} value={page} onChange={onPage} className="sm:ml-auto" />
+        <Pagination total={totalPages} value={page} onChange={onPage} />
       ) : null}
     </nav>
   );

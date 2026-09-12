@@ -49,7 +49,9 @@ Red Hat Display (wordmark, titles) + Red Hat Text (UI). Ratio ~1.25 from 15px bo
 
 ## Density
 
-4px grid. Mobile Fechamento rows ~48px hit area. Desktop table compact. Sidebar 272px. Page gutter 24px / 40px / 48px (mobile / md / lg), shared by header and canvas. Content is left-aligned to that gutter, never a centered mobile column. Listings are full width of the main column. Cell pad 20px / 14px (`--listing-px` / `--listing-py`).
+4px grid. Mobile Fechamento rows ~48px hit area. Desktop table compact. Sidebar 272px, shown when the app shell container is at least 44rem; below that the awning becomes the bottom strip (not a viewport `md:` page). Page gutter `clamp(1.5rem, 4vw, 3rem)`, shared by header and canvas. Content is left-aligned to that gutter, never a centered mobile column. Listings are full width of the main column and use container queries: stacked cards when the listing is narrow, row layout when it fits. KPI cards `auto-fit` with `minmax(min(16rem, 100%), 1fr)` so they wrap instead of overlapping. Cell pad 20px / 14px (`--listing-px` / `--listing-py`).
+
+Loading: skeleton bones for page content only. The awning nav stays mounted in the `(app)` layout and is never replaced by a skeleton.
 
 ## Components
 
@@ -59,7 +61,7 @@ Red Hat Display (wordmark, titles) + Red Hat Text (UI). Ratio ~1.25 from 15px bo
 - Select open/checked: ketchup fill or ketchup text, never a gray pill
 - Nav active: ketchup-hot + pena
 - Status chip: solid ketchup/mustard/counter, not translucent
-- Loading: skeleton bones for header, KPIs/chips, and tables
+- Loading: skeleton bones for page content only. Nav chrome is the live awning, never skeleton.
 - Listing table: ketchup thead, mustard status chip under a Loja only for rascunho/enviado/correção, sheet rows, blank empty cells. Toolbar: search + Adicionar produto. Footer: “Mostrando X a Y de Z” + page size + Mantine Pagination (active page is a ketchup disc).
 - Dashboard: four KPI cards + shadcn/recharts area chart. Header Loja filter only (Todas as Lojas or one Loja). Nova Loja lives in Configurações, not on the Dashboard.
 

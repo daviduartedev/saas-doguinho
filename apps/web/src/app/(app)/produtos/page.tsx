@@ -1,4 +1,3 @@
-import { AppShell } from "@/components/shell/app-shell";
 import { PageCanvas } from "@/components/ui/page-canvas";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,7 +9,7 @@ import {
 } from "@/doguinho/admin-actions";
 import { actorCan } from "@/doguinho/view";
 import { UNIDADES } from "@/doguinho/types";
-import { loadWorkspace, shellFrom } from "@/doguinho/workspace";
+import { loadWorkspace } from "@/doguinho/workspace";
 import { Pager } from "@/components/ui/pager";
 import { paginate } from "@/lib/pagination";
 import { redirect } from "next/navigation";
@@ -23,14 +22,13 @@ export default async function ProdutosPage({
   searchParams: Promise<{ loja?: string; page?: string }>;
 }) {
   const { loja, page } = await searchParams;
-  const workspace = await loadWorkspace(loja);
+  const workspace = await loadWorkspace(loja, { produtos: true, lojaState: false });
   const { actor, filtro, produtos } = workspace;
   const listing = paginate(produtos, page);
   if (!actorCan(actor, "manage_produto")) redirect("/fechamento");
 
   return (
-    <AppShell {...shellFrom(workspace)}>
-      <PageCanvas>
+    <PageCanvas>
         <header>
           <h1 className="font-display text-3xl font-bold text-ink">Produtos</h1>
           <p className="mt-2 max-w-xl text-sm text-steam">
@@ -38,7 +36,7 @@ export default async function ProdutosPage({
           </p>
         </header>
 
-        <form action={criarProdutoAction} className="listing-pad grid gap-3 rounded-lg border border-border bg-sheet sm:grid-cols-[1fr_8rem_auto]">
+        <form action={criarProdutoAction} className="listing-pad auto-fill-form rounded-lg border border-border bg-sheet">
           <div>
             <Label htmlFor="nome">Nome</Label>
             <Input id="nome" name="nome" required className="mt-1" />
@@ -63,26 +61,26 @@ export default async function ProdutosPage({
         </form>
 
         <div className="listing-frame">
-          <div className="grid grid-cols-1 bg-ketchup text-white sm:grid-cols-[minmax(12rem,1fr)_10rem_7rem_auto]">
+          <div className="listing-head listing-head-produtos">
             <div className="listing-cell font-semibold">Produto</div>
-            <div className="listing-cell hidden font-semibold sm:block">Unidade</div>
-            <div className="listing-cell hidden font-semibold sm:block">Status</div>
-            <div className="listing-cell hidden text-center font-semibold sm:block">Ações</div>
+            <div className="listing-cell font-semibold">Unidade</div>
+            <div className="listing-cell font-semibold">Status</div>
+            <div className="listing-cell text-center font-semibold">Ações</div>
           </div>
           {listing.items.map((produto) => (
             <form
               key={produto.id}
               action={editarProdutoAction}
-              className="grid grid-cols-1 items-center border-b border-border bg-sheet sm:grid-cols-[minmax(12rem,1fr)_10rem_7rem_auto]"
+              className="listing-row listing-row-produtos"
             >
               <input type="hidden" name="id" value={produto.id} />
-              <div className="listing-cell">
+              <div className="listing-cell" data-label="Produto">
                 <Label htmlFor={`nome-${produto.id}`} className="sr-only">
                   Nome
                 </Label>
                 <Input id={`nome-${produto.id}`} name="nome" defaultValue={produto.nome} required />
               </div>
-              <div className="listing-cell">
+              <div className="listing-cell" data-label="Unidade">
                 <Label htmlFor={`unidade-${produto.id}`} className="sr-only">
                   Unidade
                 </Label>
@@ -99,7 +97,7 @@ export default async function ProdutosPage({
                   ))}
                 </select>
               </div>
-              <div className="listing-cell text-sm text-steam">{produto.ativo ? "Ativo" : "Desativado"}</div>
+              <div className="listing-cell text-sm text-steam" data-label="Status">{produto.ativo ? "Ativo" : "Desativado"}</div>
               <div className="listing-cell flex flex-wrap items-center justify-end gap-2">
                 <SubmitButton variant="outline" size="sm">
                   Salvar
@@ -119,7 +117,6 @@ export default async function ProdutosPage({
           totalPages={listing.totalPages}
           params={{ loja: filtro }}
         />
-      </PageCanvas>
-    </AppShell>
+    </PageCanvas>
   );
 }

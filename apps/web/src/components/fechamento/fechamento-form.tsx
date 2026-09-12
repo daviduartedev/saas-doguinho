@@ -108,7 +108,7 @@ export function FechamentoForm({
       ) : null}
 
       <div className="listing-frame">
-      <table className="w-full border-collapse text-sm">
+      <table className="listing-stack w-full border-collapse text-sm">
         <thead>
           <tr className="bg-ketchup text-white">
             <th className="listing-cell text-left font-semibold">Produto</th>
@@ -154,7 +154,7 @@ export function FechamentoForm({
       {ok ? <p className="mt-3 text-sm font-medium text-ink">Enviado. Isso é o Estoque agora.</p> : null}
 
       {podeEnviar ? (
-        <div className="sticky bottom-16 mt-5 flex justify-end gap-2 bg-paper py-3 md:bottom-0">
+        <div className="sticky bottom-[var(--nav-end)] mt-5 flex flex-wrap justify-end gap-2 bg-paper py-3">
           <Button
             type="button"
             variant="outline"
@@ -218,16 +218,16 @@ function LinhaProduto({
 }) {
   return (
     <tr className="border-b border-border last:border-0">
-      <td className="listing-cell font-semibold text-ink">{produto.nome}</td>
-      <td className="listing-cell text-steam">{produto.unidade}</td>
-      <td className="listing-cell text-right">
+      <td className="listing-cell font-semibold text-ink" data-label="Produto">{produto.nome}</td>
+      <td className="listing-cell text-steam" data-label="Unidade">{produto.unidade}</td>
+      <td className="listing-cell text-right" data-label="Quantidade restante">
         <Input
           type="text"
           inputMode={teclado(produto.unidade)}
           value={valor ?? ""}
           onChange={(event) => onChange(event.target.value)}
           aria-label={`Quantidade restante de ${produto.nome}`}
-          className="tabular ml-auto h-12 w-28 text-right text-lg font-semibold"
+          className="tabular ml-auto h-12 w-full max-w-[8rem] text-right text-lg font-semibold"
           placeholder=""
           disabled={disabled}
         />

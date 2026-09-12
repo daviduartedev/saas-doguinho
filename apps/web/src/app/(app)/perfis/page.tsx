@@ -1,11 +1,10 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
-import { AppShell } from "@/components/shell/app-shell";
 import { PerfisFicha } from "@/components/perfis/perfis-ficha";
 import { countPermissionsOn } from "@/components/perfis/labels";
 import { PageCanvas } from "@/components/ui/page-canvas";
 import { ALL_PERMISSIONS } from "@/doguinho/seed";
-import { loadWorkspace, shellFrom } from "@/doguinho/workspace";
+import { loadWorkspace } from "@/doguinho/workspace";
 import { Pager } from "@/components/ui/pager";
 import { paginate } from "@/lib/pagination";
 import { redirect } from "next/navigation";
@@ -18,7 +17,7 @@ export default async function PerfisPage({
   searchParams: Promise<{ loja?: string; page?: string; novo?: string; editar?: string }>;
 }) {
   const { loja, page, novo, editar } = await searchParams;
-  const workspace = await loadWorkspace(loja);
+  const workspace = await loadWorkspace(loja, { produtos: false, lojaState: false });
   const { actor, filtro, app } = workspace;
   if (!actor.isDono) redirect("/fechamento");
   const perfis = await app.listarPerfis(actor);
@@ -28,9 +27,8 @@ export default async function PerfisPage({
   const novoHref = filtro ? `/perfis?loja=${filtro}&novo=1` : "/perfis?novo=1";
 
   return (
-    <AppShell {...shellFrom(workspace)}>
-      <PageCanvas>
-        <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+    <PageCanvas>
+        <header className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="font-display text-3xl font-bold text-ink">Perfis</h1>
             <p className="mt-2 max-w-xl text-sm text-steam">
@@ -49,7 +47,7 @@ export default async function PerfisPage({
         {mostrarFicha ? <PerfisFicha perfil={editando} lojaId={filtro} /> : null}
 
         <div className="listing-frame">
-          <div className="grid grid-cols-[minmax(10rem,1fr)_8rem_auto] bg-ketchup text-white">
+          <div className="listing-head listing-head-perfis">
             <div className="listing-cell font-semibold">Perfil</div>
             <div className="listing-cell font-semibold">Ligadas</div>
             <div className="listing-cell text-right font-semibold">Ações</div>
@@ -61,9 +59,9 @@ export default async function PerfisPage({
             return (
               <div
                 key={perfil.id}
-                className="grid grid-cols-[minmax(10rem,1fr)_8rem_auto] items-center border-b border-border bg-sheet last:border-0"
+                className="listing-row listing-row-perfis"
               >
-                <div className="listing-cell font-semibold">
+                <div className="listing-cell font-semibold" data-label="Perfil">
                   {perfil.nome}
                   {perfil.template ? (
                     <span className="ml-2 rounded-full bg-mustard px-2 py-0.5 text-[11px] font-semibold text-ink">
@@ -71,7 +69,7 @@ export default async function PerfisPage({
                     </span>
                   ) : null}
                 </div>
-                <div className="listing-cell tabular text-steam">
+                <div className="listing-cell tabular text-steam" data-label="Ligadas">
                   {countPermissionsOn(perfil.permissions)} de {ALL_PERMISSIONS.length}
                 </div>
                 <div className="listing-cell text-right">
@@ -92,7 +90,6 @@ export default async function PerfisPage({
           totalPages={listing.totalPages}
           params={{ loja: filtro }}
         />
-      </PageCanvas>
-    </AppShell>
+    </PageCanvas>
   );
 }
