@@ -1,4 +1,3 @@
-import { AppShell } from "@/components/shell/app-shell";
 import { PageCanvas } from "@/components/ui/page-canvas";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,7 +9,7 @@ import {
   desligarUsuarioAction,
 } from "@/doguinho/admin-actions";
 import { actorCan } from "@/doguinho/view";
-import { loadWorkspace, shellFrom } from "@/doguinho/workspace";
+import { loadWorkspace } from "@/doguinho/workspace";
 import { Pager } from "@/components/ui/pager";
 import { paginate } from "@/lib/pagination";
 import { redirect } from "next/navigation";
@@ -23,16 +22,14 @@ export default async function UsuariosPage({
   searchParams: Promise<{ loja?: string; page?: string }>;
 }) {
   const { loja, page } = await searchParams;
-  const workspace = await loadWorkspace(loja);
+  const workspace = await loadWorkspace(loja, { produtos: false, lojaState: false });
   const { actor, lojas, filtro, app } = workspace;
   if (!actorCan(actor, "manage_users")) redirect("/fechamento");
-  const users = await app.listarUsuarios(actor);
+  const [users, perfis] = await Promise.all([app.listarUsuarios(actor), app.listarPerfis(actor)]);
   const listing = paginate(users, page);
-  const perfis = await app.listarPerfis(actor);
 
   return (
-    <AppShell {...shellFrom(workspace)}>
-      <PageCanvas>
+    <PageCanvas>
         <header>
           <h1 className="font-display text-3xl font-bold text-ink">Usuários</h1>
           <p className="mt-2 max-w-xl text-sm text-steam">
@@ -43,7 +40,7 @@ export default async function UsuariosPage({
         {actor.isDono || actorCan(actor, "manage_users") ? (
           <form action={criarUsuarioAction} className="listing-pad space-y-3 rounded-lg border border-border bg-sheet">
             <h2 className="font-display text-lg font-bold">Novo usuário</h2>
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-3 auto-fill-form">
               <div>
                 <Label htmlFor="nome">Nome</Label>
                 <Input id="nome" name="nome" required className="mt-1" />
@@ -164,7 +161,6 @@ export default async function UsuariosPage({
           totalPages={listing.totalPages}
           params={{ loja: filtro }}
         />
-      </PageCanvas>
-    </AppShell>
+    </PageCanvas>
   );
 }

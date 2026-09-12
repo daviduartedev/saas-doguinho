@@ -15,7 +15,7 @@ export function EstoqueTabela({
   podeGerir: boolean;
 }) {
   return (
-    <table className="w-full border-collapse text-sm">
+    <table className="listing-stack w-full border-collapse text-sm">
       <thead>
         <tr className="bg-ketchup text-white">
           <th className="listing-cell text-left font-semibold">Produto</th>
@@ -39,19 +39,27 @@ export function EstoqueTabela({
       <tbody className="bg-sheet">
         {produtos.map((produto) => (
           <tr key={produto.id} className="border-b border-border last:border-0">
-            <td className="listing-cell font-semibold text-ink">{produto.nome}</td>
-            <td className="listing-cell text-steam">{produto.unidade}</td>
+            <td className="listing-cell font-semibold text-ink" data-label="Produto">
+              {produto.nome}
+            </td>
+            <td className="listing-cell text-steam" data-label="Unidade">
+              {produto.unidade}
+            </td>
             {visao.map((coluna) => {
               const valor = coluna.valores[produto.id];
               return (
-                <td key={coluna.loja.id} className="listing-cell tabular text-center text-base font-semibold text-ink">
+                <td
+                  key={coluna.loja.id}
+                  className="listing-cell tabular text-center text-base font-semibold text-ink"
+                  data-label={coluna.loja.nome}
+                >
                   {valor === null || valor === undefined ? "" : valor}
                 </td>
               );
             })}
             {podeGerir ? (
-              <td className="listing-cell">
-                <div className="flex items-center justify-center gap-3 text-steam">
+              <td className="listing-cell" data-label="Ações">
+                <div className="flex items-center justify-end gap-3 text-steam">
                   <Link
                     href="/produtos"
                     aria-label={`Editar ${produto.nome}`}

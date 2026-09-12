@@ -211,15 +211,18 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
     exigeJustificativa: boolean;
   }> {
     const day = calendarDay(deps.clock);
-    const produtos = (await deps.store.listProdutos(organizationId)).filter((produto) => produto.ativo);
-    const estoqueRows = await deps.store.listEstoque(lojaId);
+    const [todosProdutos, estoqueRows, rascunhoRow, hoje] = await Promise.all([
+      deps.store.listProdutos(organizationId),
+      deps.store.listEstoque(lojaId),
+      deps.store.getRascunho(lojaId, day),
+      deps.store.submissionsOnDay(lojaId, day),
+    ]);
+    const produtos = todosProdutos.filter((produto) => produto.ativo);
     const valores: Record<string, number | null> = {};
     for (const produto of produtos) {
       valores[produto.id] =
         estoqueRows.find((row) => row.produtoId === produto.id)?.quantidade ?? null;
     }
-    const rascunhoRow = await deps.store.getRascunho(lojaId, day);
-    const hoje = await deps.store.submissionsOnDay(lojaId, day);
     let status: FechamentoStatus = "nunca_fechou";
     if (hoje.length > 0) status = "enviado";
     else if (rascunhoRow && rascunhoRow.linhas.some((linha) => linha.restante !== null)) status = "rascunho";
@@ -235,8 +238,11 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
 
   async function linhasDoDia(lojaId: string): Promise<QuantidadeLinha[]> {
     const day = calendarDay(deps.clock);
-    const ativos = (await deps.store.listProdutos(organizationId)).filter((produto) => produto.ativo);
-    const rascunho = await deps.store.getRascunho(lojaId, day);
+    const [todosProdutos, rascunho] = await Promise.all([
+      deps.store.listProdutos(organizationId),
+      deps.store.getRascunho(lojaId, day),
+    ]);
+    const ativos = todosProdutos.filter((produto) => produto.ativo);
     const map = new Map((rascunho?.linhas ?? []).map((linha) => [linha.produtoId, linha.restante]));
     return ativos.map((produto) => ({
       produtoId: produto.id,
@@ -248,12 +254,12 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
     const submissions = [...(await deps.store.listSubmissions(lojaId))].sort((a, b) =>
       a.enviadoEm < b.enviadoEm ? 1 : -1,
     );
-    const rows: HistoryRow[] = [];
-    for (const submission of submissions) {
-      const user = await deps.store.getUserById(submission.usuarioId);
-      rows.push({ submission, usuarioNome: user?.nome ?? "Usuário" });
-    }
-    return rows;
+    return Promise.all(
+      submissions.map(async (submission) => {
+        const user = await deps.store.getUserById(submission.usuarioId);
+        return { submission, usuarioNome: user?.nome ?? "Usuário" };
+      }),
+    );
   }
 
   function sameLinhas(a: QuantidadeLinha[], b: Submission["linhas"]) {
@@ -697,22 +703,29 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
       const visiveis = actor.isDono
         ? lojas
         : lojas.filter((loja) => actor.vinculoLojaIds.includes(loja.id));
+      const colunas = await Promise.all(
+        visiveis.map(async (loja) => {
+          const [snap, historico] = await Promise.all([statusDaLoja(loja.id), historyRows(loja.id)]);
+          return { loja, snap, historico };
+        }),
+      );
       const estoque: EstoqueView[] = [];
       const semFechamentoHoje: Loja[] = [];
       const recentes: HistoryRow[] = [];
-      for (const loja of visiveis) {
-        const snap = await statusDaLoja(loja.id);
+      const historicos: { loja: Loja; rows: HistoryRow[] }[] = [];
+      for (const coluna of colunas) {
         estoque.push({
-          loja,
-          status: snap.status,
-          valores: snap.valores,
-          exigeJustificativa: snap.exigeJustificativa,
+          loja: coluna.loja,
+          status: coluna.snap.status,
+          valores: coluna.snap.valores,
+          exigeJustificativa: coluna.snap.exigeJustificativa,
         });
-        if (snap.hoje.length === 0) semFechamentoHoje.push(loja);
-        recentes.push(...(await historyRows(loja.id)));
+        if (coluna.snap.hoje.length === 0) semFechamentoHoje.push(coluna.loja);
+        recentes.push(...coluna.historico);
+        historicos.push({ loja: coluna.loja, rows: coluna.historico });
       }
       recentes.sort((a, b) => (a.submission.enviadoEm < b.submission.enviadoEm ? 1 : -1));
-      return { semFechamentoHoje, estoque, recentes: recentes.slice(0, 20) };
+      return { semFechamentoHoje, estoque, recentes: recentes.slice(0, 20), historicos };
     },
   };
 }

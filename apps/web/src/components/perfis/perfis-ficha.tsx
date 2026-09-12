@@ -32,7 +32,7 @@ export function PerfisFicha({
         <Label htmlFor="nome">Nome</Label>
         <Input id="nome" name="nome" required defaultValue={perfil?.nome ?? ""} className="mt-1" />
       </div>
-      <div className="grid gap-x-8 gap-y-3 sm:grid-cols-2">
+      <div className="grid gap-x-8 gap-y-3 auto-fill-form">
         {ALL_PERMISSIONS.map((permission) => (
           <Switch
             key={permission}

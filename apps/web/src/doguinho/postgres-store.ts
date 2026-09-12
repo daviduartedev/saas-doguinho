@@ -10,8 +10,20 @@ type Sql = postgres.Sql;
 
 const txAls = new AsyncLocalStorage<Sql>();
 
+/** ASVS 13.2: timeouts and pool size for the Neon round-trip from Vercel isolates. */
+export function postgresPoolOptions(url: string, env: { VERCEL?: string | undefined }) {
+  const serverless = Boolean(env.VERCEL);
+  return {
+    max: serverless ? 1 : 8,
+    connect_timeout: 10,
+    prepare: false as const,
+    ssl: url.includes("sslmode=") ? ("require" as const) : undefined,
+    ...(serverless ? { idle_timeout: 20 } : {}),
+  };
+}
+
 export async function createPostgresStore(url: string): Promise<Store> {
-  const root = postgres(url, { max: 8, ssl: url.includes("sslmode=") ? "require" : undefined });
+  const root = postgres(url, postgresPoolOptions(url, { VERCEL: process.env.VERCEL }));
   const db = () => txAls.getStore() ?? root;
 
   await migrate(root);
