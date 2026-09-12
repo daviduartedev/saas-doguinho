@@ -160,3 +160,53 @@ Evidências: `docs/qa/evidence/results.jsonl` (127 registros brutos, incl. vered
 | Medium/Low documentados | ✅ (este relatório) |
 
 **Próxima fase:** QA-13 (correções red→green na ordem QA-009 → QA-002 → QA-001 → QA-006/005 → QA-003/004 → QA-007/008/010) → QA-14 (E2E permanentes) → QA-15 (reteste) → gate final.
+
+---
+
+## 6. QA-13/14/15 — Correções, regressões permanentes e gate FINAL
+
+### Correções (todas com regressão red→green)
+
+| Bug | Severidade | Correção | Regressão |
+| --- | --- | --- | --- |
+| QA-001 | High | `build` passa a usar `next build --turbopack` | o próprio gate de build (QA-15) |
+| QA-002 | High | rota `GET /sair` apaga o cookie; guards mandam token inválido para `/sair` (não `/entrar`) — fim do loop | unit (4) + `regression/qa-002.spec.ts` |
+| QA-003 | Medium | /fechamento somente-leitura para Perfil sem `submit_*` (sem botões, inputs desabilitados, sem auto-save) | `regression/qa-003.spec.ts` |
+| QA-004 | Medium | error boundary no grupo `(app)` + `isAppError` **estrutural** (o `instanceof` falhava entre as camadas SSR × server-action do dev server — causa raiz encontrada na correção) | unit + `regression/qa-004.spec.ts` |
+| QA-005 | Low | form trata falha de rede no envio (try/catch → mensagem) | `regression/qa-005.spec.ts` |
+| QA-006 | Medium | sessão expirada no meio do preenchimento → mensagem de domínio, sem crash | `regression/qa-006.spec.ts` |
+| QA-007 | Medium | nome de Produto **desativado** pode ser reutilizado (histórico preservado) | unit + `regression/qa-007.spec.ts` |
+| QA-008 | Medium | e-mail único enforced **no store**: memória atômica (check+insert sem await) e Postgres com `UNIQUE INDEX (organization_id, email)` + 23505→ConflictError | unit (corrida 2×→1 vencedor) |
+| QA-009 | High | `redirect()` fora do `try` em `criarLojaAction` (NEXT_REDIRECT não vira 500) | unit + `regression/qa-009.spec.ts` |
+| QA-010 | Low | tetos server-side: Loja/Produto 80 chars, Justificativa 1000 | unit (3) + `regression/qa-010.spec.ts` (POST forjado) |
+
+### Suíte permanente (QA-14)
+
+`apps/web/tests/e2e/` — **24 specs**: `auth` (5), `permissions` (5), `tenant-isolation` (2), `critical-flows` (3), `regression/` (9). `global-setup.ts` garante as identidades de QA via UI (idempotente); `helpers.ts` com login/logout/criarLoja/selecionarLoja (typeahead no seletor Radix)/preencherQuantidades (pager dinâmico). Script: `npm run test:e2e`.
+
+Durabilidade provada: a suíte passou **3× consecutivas no mesmo servidor** (estado sujo acumulado) e 1× em servidor recém-semeado — sem intervenção manual.
+
+### Reteste final (QA-15)
+
+| Gate | Comando | Resultado |
+| --- | --- | --- |
+| Lint | `npm run lint` | ✅ 0 erros (10 warnings, todos em `.scratch/`) |
+| Typecheck | `npx tsc --noEmit` | ✅ limpo |
+| Unit | `npx vitest run` | ✅ **52/52** (6 arquivos) |
+| Build | `npm run build` | ✅ verde (~20s, turbopack) |
+| E2E | `npx playwright test` | ✅ **24/24** em servidor recém-semeado |
+| Fluxos críticos no navegador | `critical-flows.spec.ts` (Fechamento→Estoque→Histórico, Correção, Rascunho) | ✅ |
+
+### QA GATE — VEREDITO FINAL: ✅ **PASSA**
+
+| Critério | Estado |
+| --- | --- |
+| 0 Critical abertos | ✅ |
+| 0 High abertos | ✅ (QA-001, QA-002, QA-009 corrigidos e regressionados) |
+| Fluxos críticos verdes | ✅ |
+| Suíte de regressão verde | ✅ 24/24 E2E + 52/52 unit |
+| Build verde | ✅ |
+| Sem regressões inexplicadas | ✅ |
+| Medium/Low restantes | ✅ todos corrigidos; SUSPICIOUS/observações documentados na seção 3 |
+
+**Handoff para HUMAN QA:** o sistema está pronto para a revisão manual. Focos sugeridos para o humano: (1) as 3 observações SUSPICIOUS da seção 3 (KPIs ilustrativos, estoque de produto desativado, promoção a Dono) — são decisões de produto, não bugs; (2) smoke visual nas 9 áreas do `QA_MAP.md`; (3) quando houver Postgres real, validar a migration do QA-008 (`users_org_email_key`). Auditoria de segurança profunda permanece fora desta rodada — escopo em `../audit/SECURITY_FUTURE_SCOPE.md`.
