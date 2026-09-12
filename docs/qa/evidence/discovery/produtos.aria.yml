@@ -1,0 +1,151 @@
+- complementary:
+  - link "Doguinho do Corujá":
+    - /url: /fechamento
+    - img "Doguinho do Corujá"
+  - navigation:
+    - link "Dashboard":
+      - /url: /dashboard?loja=todas
+    - link "Fechamento":
+      - /url: /fechamento?loja=todas
+    - link "Estoque":
+      - /url: /estoque?loja=todas
+    - link "Histórico":
+      - /url: /historico?loja=todas
+    - link "Produtos":
+      - /url: /produtos?loja=todas
+    - link "Usuários":
+      - /url: /usuarios?loja=todas
+    - link "Perfis":
+      - /url: /perfis?loja=todas
+    - link "Configurações":
+      - /url: /configuracoes?loja=todas
+  - button "Sair"
+- banner:
+  - combobox: Todas as Lojas
+  - paragraph: Dono · Dono
+- main:
+  - heading "Produtos" [level=1]
+  - paragraph: Um catálogo para todas as Lojas. Desativar tira do próximo Fechamento e guarda o histórico.
+  - text: Nome
+  - textbox "Nome"
+  - text: Unidade
+  - combobox "Unidade":
+    - option "unidade" [selected]
+    - option "kg"
+    - option "g"
+    - option "L"
+    - option "mL"
+    - option "pacote"
+  - button "Cadastrar"
+  - text: Produto Unidade Status Ações Nome
+  - textbox "Nome": Milho
+  - text: Unidade
+  - combobox "Unidade":
+    - option "unidade"
+    - option "kg" [selected]
+    - option "g"
+    - option "L"
+    - option "mL"
+    - option "pacote"
+  - text: Ativo
+  - button "Salvar"
+  - button "Desativar"
+  - text: Nome
+  - textbox "Nome": Ervilha
+  - text: Unidade
+  - combobox "Unidade":
+    - option "unidade"
+    - option "kg" [selected]
+    - option "g"
+    - option "L"
+    - option "mL"
+    - option "pacote"
+  - text: Ativo
+  - button "Salvar"
+  - button "Desativar"
+  - text: Nome
+  - textbox "Nome": Tomate
+  - text: Unidade
+  - combobox "Unidade":
+    - option "unidade"
+    - option "kg" [selected]
+    - option "g"
+    - option "L"
+    - option "mL"
+    - option "pacote"
+  - text: Ativo
+  - button "Salvar"
+  - button "Desativar"
+  - text: Nome
+  - textbox "Nome": Cebola
+  - text: Unidade
+  - combobox "Unidade":
+    - option "unidade"
+    - option "kg" [selected]
+    - option "g"
+    - option "L"
+    - option "mL"
+    - option "pacote"
+  - text: Ativo
+  - button "Salvar"
+  - button "Desativar"
+  - text: Nome
+  - textbox "Nome": Maionese
+  - text: Unidade
+  - combobox "Unidade":
+    - option "unidade"
+    - option "kg"
+    - option "g"
+    - option "L" [selected]
+    - option "mL"
+    - option "pacote"
+  - text: Ativo
+  - button "Salvar"
+  - button "Desativar"
+  - text: Nome
+  - textbox "Nome": Mostarda
+  - text: Unidade
+  - combobox "Unidade":
+    - option "unidade"
+    - option "kg"
+    - option "g"
+    - option "L" [selected]
+    - option "mL"
+    - option "pacote"
+  - text: Ativo
+  - button "Salvar"
+  - button "Desativar"
+  - text: Nome
+  - textbox "Nome": Salsicha
+  - text: Unidade
+  - combobox "Unidade":
+    - option "unidade" [selected]
+    - option "kg"
+    - option "g"
+    - option "L"
+    - option "mL"
+    - option "pacote"
+  - text: Ativo
+  - button "Salvar"
+  - button "Desativar"
+  - text: Nome
+  - textbox "Nome": Pão
+  - text: Unidade
+  - combobox "Unidade":
+    - option "unidade" [selected]
+    - option "kg"
+    - option "g"
+    - option "L"
+    - option "mL"
+    - option "pacote"
+  - text: Ativo
+  - button "Salvar"
+  - button "Desativar"
+  - navigation "Paginação":
+    - button [disabled]:
+      - img
+    - button "1"
+    - button "2"
+    - button:
+      - img
+- alert

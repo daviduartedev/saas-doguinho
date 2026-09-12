@@ -1,0 +1,58 @@
+- complementary:
+  - link "Doguinho do Corujá":
+    - /url: /fechamento
+    - img "Doguinho do Corujá"
+  - navigation:
+    - link "Dashboard":
+      - /url: /dashboard?loja=todas
+    - link "Fechamento":
+      - /url: /fechamento?loja=todas
+    - link "Estoque":
+      - /url: /estoque?loja=todas
+    - link "Histórico":
+      - /url: /historico?loja=todas
+    - link "Produtos":
+      - /url: /produtos?loja=todas
+    - link "Usuários":
+      - /url: /usuarios?loja=todas
+    - link "Perfis":
+      - /url: /perfis?loja=todas
+    - link "Configurações":
+      - /url: /configuracoes?loja=todas
+  - button "Sair"
+- banner:
+  - combobox: Todas as Lojas
+  - paragraph: Dono · Dono
+- main:
+  - heading "Dashboard" [level=1]
+  - paragraph: Entradas e saídas da prateleira. Todas as Lojas.
+  - paragraph: Série ilustrativa. Pouco histórico de Fechamento.
+  - heading "Entradas" [level=3]
+  - text: +1%
+  - paragraph: "627"
+  - paragraph: Subiu neste recorte
+  - paragraph: Produto que voltou à prateleira
+  - heading "Saídas" [level=3]
+  - text: "-7%"
+  - paragraph: "769"
+  - paragraph: Menos saída neste recorte
+  - paragraph: Produto que saiu da prateleira
+  - heading "Líquido" [level=3]
+  - text: +35%
+  - paragraph: "-142"
+  - paragraph: Prateleira aumentou
+  - paragraph: Entradas menos saídas
+  - heading "Lojas" [level=3]
+  - paragraph: "3"
+  - paragraph: Todas as Lojas
+  - paragraph: Recorte do filtro do header
+  - heading "Entradas e saídas" [level=2]
+  - paragraph: Total no recorte de 14 dias
+  - button "7 dias"
+  - button "14 dias"
+  - button "30 dias"
+  - application: 31/08 01/09 02/09 03/09 04/09 05/09 06/09 07/09 08/09 09/09 10/09 11/09 12/09
+  - list:
+    - listitem: Entradas
+    - listitem: Saídas
+- alert
