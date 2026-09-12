@@ -14,8 +14,14 @@ export async function actorDaSessao(): Promise<Actor | null> {
 }
 
 export async function exigirActor(): Promise<Actor> {
-  const actor = await actorDaSessao();
-  if (!actor) redirect("/entrar");
+  const jar = await cookies();
+  const token = jar.get(SESSION_COOKIE)?.value;
+  if (!token) redirect("/entrar");
+  const app = await getApp();
+  const actor = await app.resolverSessao(token);
+  // Cookie presente mas token inválido/expirado/revogado: /sair apaga o cookie antes
+  // de voltar ao login — senão middleware ↔ layout entram em loop de redirects (QA-002).
+  if (!actor) redirect("/sair");
   return actor;
 }
 

@@ -358,6 +358,8 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
       requireDono(actor);
       const nome = normalizeName(input.nome);
       if (!nome) throw new ValidationError("Informe o nome da Loja.");
+      // QA-010: maxLength do client é contornável — o servidor enforce o teto.
+      if (nome.length > 80) throw new ValidationError("Nome da Loja deve ter no máximo 80 caracteres.");
       const loja = { id: deps.ids.id(), organizationId, nome };
       await deps.store.insertLoja(loja);
       return loja;
@@ -372,10 +374,14 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
       requirePermission(actor, "manage_produto");
       const nome = normalizeName(input.nome);
       if (!nome) throw new ValidationError("Informe o nome do Produto.");
+      // QA-010: maxLength do client é contornável — o servidor enforce o teto.
+      if (nome.length > 80) throw new ValidationError("Nome do Produto deve ter no máximo 80 caracteres.");
       if (!isUnidadeMedida(input.unidade)) {
         throw new ValidationError("Unidade de medida inválida.");
       }
-      if (await deps.store.findProdutoByName(organizationId, nome)) {
+      // QA-007: Produto desativado guarda histórico, mas não queima o nome.
+      const existente = await deps.store.findProdutoByName(organizationId, nome);
+      if (existente?.ativo) {
         throw new ConflictError("Já existe um Produto com esse nome.");
       }
       const produto: Produto = {
@@ -395,11 +401,13 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
       if (!produto || produto.organizationId !== organizationId) throw new ForbiddenError();
       const nome = normalizeName(input.nome);
       if (!nome) throw new ValidationError("Informe o nome do Produto.");
+      // QA-010: maxLength do client é contornável — o servidor enforce o teto.
+      if (nome.length > 80) throw new ValidationError("Nome do Produto deve ter no máximo 80 caracteres.");
       if (!isUnidadeMedida(input.unidade)) {
         throw new ValidationError("Unidade de medida inválida.");
       }
       const other = await deps.store.findProdutoByName(organizationId, nome);
-      if (other && other.id !== produto.id) {
+      if (other && other.ativo && other.id !== produto.id) {
         throw new ConflictError("Já existe um Produto com esse nome.");
       }
       await deps.store.updateProduto(produto.id, { nome, unidade: input.unidade });
@@ -635,6 +643,10 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
 
         const primeiro = hoje.find((row) => row.tipo === "fechamento") ?? hoje[0];
         const justificativaLimpa = justificativa?.trim() || null;
+        // QA-010: teto server-side para a Justificativa (client não enforce).
+        if (justificativaLimpa && justificativaLimpa.length > 1000) {
+          throw new ValidationError("Justificativa deve ter no máximo 1000 caracteres.");
+        }
         if (jaEnviou && !justificativaLimpa) {
           if (primeiro && sameLinhas(linhas, primeiro.linhas)) return primeiro;
           throw new ValidationError("Correção exige Justificativa.");

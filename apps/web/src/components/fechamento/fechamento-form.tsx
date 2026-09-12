@@ -20,6 +20,7 @@ export function FechamentoForm({
   linhasIniciais,
   produtos,
   exigeJustificativa,
+  podeEnviar,
 }: {
   lojaId: string;
   lojaNome: string;
@@ -27,6 +28,7 @@ export function FechamentoForm({
   linhasIniciais: QuantidadeLinha[];
   produtos: Produto[];
   exigeJustificativa: boolean;
+  podeEnviar: boolean;
 }) {
   const ativos = produtos.filter((produto) => produto.ativo);
   const [linhas, setLinhas] = useState(linhasIniciais);
@@ -42,6 +44,7 @@ export function FechamentoForm({
   const skipAutosave = useRef(true);
 
   useEffect(() => {
+    if (!podeEnviar) return; // somente-leitura: sem auto-save (QA-003)
     if (skipAutosave.current) {
       skipAutosave.current = false;
       return;
@@ -50,10 +53,11 @@ export function FechamentoForm({
       const data = new FormData();
       data.set("lojaId", lojaId);
       data.set("linhas", JSON.stringify(linhas));
-      void salvarRascunhoAction(data);
+      // auto-save é silencioso por design, mas nunca pode virar rejeição não tratada (QA-005/006)
+      void salvarRascunhoAction(data).catch(() => {});
     }, 600);
     return () => window.clearTimeout(timer);
-  }, [linhas, lojaId]);
+  }, [linhas, lojaId, podeEnviar]);
 
   function setRestante(produtoId: string, raw: string) {
     const restante = raw === "" ? null : Number(raw.replace(",", "."));
@@ -119,6 +123,7 @@ export function FechamentoForm({
               produto={produto}
               valor={linhas.find((linha) => linha.produtoId === produto.id)?.restante ?? null}
               onChange={(raw) => setRestante(produto.id, raw)}
+              disabled={!podeEnviar}
             />
           ))}
         </tbody>
@@ -132,7 +137,7 @@ export function FechamentoForm({
         onPage={setPage}
       />
 
-      {precisaCorrecao ? (
+      {precisaCorrecao && podeEnviar ? (
         <div className="mt-4">
           <Label htmlFor="justificativa">Justificativa</Label>
           <textarea
@@ -148,37 +153,54 @@ export function FechamentoForm({
       {erro ? <p className="mt-3 text-sm font-medium text-ketchup">{erro}</p> : null}
       {ok ? <p className="mt-3 text-sm font-medium text-ink">Enviado. Isso é o Estoque agora.</p> : null}
 
-      <div className="sticky bottom-16 mt-5 flex justify-end gap-2 bg-paper py-3 md:bottom-0">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          pending={pending}
-          disabled={pending || ativos.length === 0}
-          onClick={() =>
-            start(async () => {
-              await salvarRascunhoAction(payload());
-            })
-          }
-        >
-          Guardar rascunho
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          pending={pending}
-          disabled={pending || ativos.length === 0}
-          onClick={() =>
-            start(async () => {
-              const result = await enviarFechamentoAction(payload());
-              setErro(result.ok ? null : result.erro);
-              setOk(result.ok);
-            })
-          }
-        >
-          {precisaCorrecao ? "Enviar correção" : "Enviar fechamento"}
-        </Button>
-      </div>
+      {podeEnviar ? (
+        <div className="sticky bottom-16 mt-5 flex justify-end gap-2 bg-paper py-3 md:bottom-0">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            pending={pending}
+            disabled={pending || ativos.length === 0}
+            onClick={() =>
+              start(async () => {
+                try {
+                  await salvarRascunhoAction(payload());
+                } catch {
+                  setErro("Não foi possível guardar o Rascunho. Verifique sua conexão e tente novamente.");
+                  setOk(false);
+                }
+              })
+            }
+          >
+            Guardar rascunho
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            pending={pending}
+            disabled={pending || ativos.length === 0}
+            onClick={() =>
+              start(async () => {
+                try {
+                  const result = await enviarFechamentoAction(payload());
+                  setErro(result.ok ? null : result.erro);
+                  setOk(result.ok);
+                } catch {
+                  // rede caiu ou sessão expirou no meio do envio (middleware redireciona o POST) — QA-005/QA-006
+                  setErro("Não foi possível enviar. Verifique sua conexão; se persistir, entre novamente.");
+                  setOk(false);
+                }
+              })
+            }
+          >
+            {precisaCorrecao ? "Enviar correção" : "Enviar fechamento"}
+          </Button>
+        </div>
+      ) : (
+        <p className="mt-4 rounded-md border border-border bg-sheet px-3 py-2 text-sm text-steam">
+          Seu Perfil não envia Fechamento nem Correção nesta Loja. O quadro acima é somente leitura.
+        </p>
+      )}
     </div>
   );
 }
@@ -187,10 +209,12 @@ function LinhaProduto({
   produto,
   valor,
   onChange,
+  disabled = false,
 }: {
   produto: Produto;
   valor: number | null;
   onChange: (raw: string) => void;
+  disabled?: boolean;
 }) {
   return (
     <tr className="border-b border-border last:border-0">
@@ -205,6 +229,7 @@ function LinhaProduto({
           aria-label={`Quantidade restante de ${produto.nome}`}
           className="tabular ml-auto h-12 w-28 text-right text-lg font-semibold"
           placeholder=""
+          disabled={disabled}
         />
       </td>
     </tr>

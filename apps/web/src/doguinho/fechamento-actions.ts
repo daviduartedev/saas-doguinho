@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { AppError } from "./errors";
+import { isAppError } from "./errors";
 import { getApp } from "./runtime";
 import { actorDaSessao } from "./sessao";
 import type { QuantidadeLinha } from "./types";
@@ -35,7 +35,7 @@ export async function salvarRascunhoAction(formData: FormData) {
   } catch (error) {
     return {
       ok: false as const,
-      erro: error instanceof AppError ? error.message : "Não foi possível guardar.",
+      erro: isAppError(error) ? error.message : "Não foi possível guardar.",
     };
   }
 }
@@ -58,7 +58,7 @@ export async function enviarFechamentoAction(formData: FormData) {
   } catch (error) {
     return {
       ok: false as const,
-      erro: error instanceof AppError ? error.message : "Não foi possível enviar.",
+      erro: isAppError(error) ? error.message : "Não foi possível enviar.",
     };
   }
 }

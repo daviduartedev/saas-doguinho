@@ -1,0 +1,11 @@
+- main:
+  - img "Doguinho do Corujá"
+  - heading "Entrar" [level=1]
+  - paragraph: Acesse seu sistema de estoque
+  - text: E-mail
+  - textbox "E-mail"
+  - text: Senha
+  - textbox "Senha"
+  - button "Mostrar senha"
+  - button "Entrar"
+- alert

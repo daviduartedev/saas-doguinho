@@ -1,0 +1,94 @@
+- complementary:
+  - link "Doguinho do Corujá":
+    - /url: /fechamento
+    - img "Doguinho do Corujá"
+  - navigation:
+    - link "Dashboard":
+      - /url: /dashboard?loja=todas
+    - link "Fechamento":
+      - /url: /fechamento?loja=todas
+    - link "Estoque":
+      - /url: /estoque?loja=todas
+    - link "Histórico":
+      - /url: /historico?loja=todas
+    - link "Produtos":
+      - /url: /produtos?loja=todas
+    - link "Usuários":
+      - /url: /usuarios?loja=todas
+    - link "Perfis":
+      - /url: /perfis?loja=todas
+    - link "Configurações":
+      - /url: /configuracoes?loja=todas
+  - button "Sair"
+- banner:
+  - combobox: Todas as Lojas
+  - paragraph: Dono · Dono
+- main:
+  - heading "Fechamento · Centro" [level=1]
+  - paragraph: Informe a quantidade restante de cada Produto ativo. Isso vira o Estoque oficial da Loja.
+  - table:
+    - rowgroup:
+      - row "Produto Unidade Quantidade restante":
+        - columnheader "Produto"
+        - columnheader "Unidade"
+        - columnheader "Quantidade restante"
+    - rowgroup:
+      - row "Milho kg":
+        - cell "Milho"
+        - cell "kg"
+        - cell:
+          - textbox "Quantidade restante de Milho":
+            - /placeholder: ""
+      - row "Ervilha kg":
+        - cell "Ervilha"
+        - cell "kg"
+        - cell:
+          - textbox "Quantidade restante de Ervilha":
+            - /placeholder: ""
+      - row "Tomate kg":
+        - cell "Tomate"
+        - cell "kg"
+        - cell:
+          - textbox "Quantidade restante de Tomate":
+            - /placeholder: ""
+      - row "Cebola kg":
+        - cell "Cebola"
+        - cell "kg"
+        - cell:
+          - textbox "Quantidade restante de Cebola":
+            - /placeholder: ""
+      - row "Maionese L":
+        - cell "Maionese"
+        - cell "L"
+        - cell:
+          - textbox "Quantidade restante de Maionese":
+            - /placeholder: ""
+      - row "Mostarda L":
+        - cell "Mostarda"
+        - cell "L"
+        - cell:
+          - textbox "Quantidade restante de Mostarda":
+            - /placeholder: ""
+      - row "Salsicha unidade":
+        - cell "Salsicha"
+        - cell "unidade"
+        - cell:
+          - textbox "Quantidade restante de Salsicha":
+            - /placeholder: ""
+      - row "Pão unidade":
+        - cell "Pão"
+        - cell "unidade"
+        - cell:
+          - textbox "Quantidade restante de Pão":
+            - /placeholder: ""
+  - navigation "Paginação":
+    - paragraph: Mostrando 1 a 8 de 9 produtos
+    - button [disabled]:
+      - img
+    - button "1"
+    - button "2"
+    - button:
+      - img
+  - button "Guardar rascunho"
+  - button "Enviar fechamento"
+- alert

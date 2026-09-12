@@ -1,0 +1,134 @@
+- complementary:
+  - link "Doguinho do Corujá":
+    - /url: /fechamento
+    - img "Doguinho do Corujá"
+  - navigation:
+    - link "Dashboard":
+      - /url: /dashboard?loja=todas
+    - link "Fechamento":
+      - /url: /fechamento?loja=todas
+    - link "Estoque":
+      - /url: /estoque?loja=todas
+    - link "Histórico":
+      - /url: /historico?loja=todas
+    - link "Produtos":
+      - /url: /produtos?loja=todas
+    - link "Usuários":
+      - /url: /usuarios?loja=todas
+    - link "Perfis":
+      - /url: /perfis?loja=todas
+    - link "Configurações":
+      - /url: /configuracoes?loja=todas
+  - button "Sair"
+- banner:
+  - combobox: Todas as Lojas
+  - paragraph: Dono · Dono
+- main:
+  - heading "Estoque" [level=1]
+  - paragraph: Número oficial = quantidade restante do último Fechamento enviado. Rascunho não conta.
+  - textbox "Buscar produto..."
+  - link "Adicionar produto":
+    - /url: /estoque?loja=todas&novo=1
+  - table:
+    - rowgroup:
+      - row "Produto Unidade Centro Jardim Juliana Magalhães Ações":
+        - columnheader "Produto"
+        - columnheader "Unidade"
+        - columnheader "Centro"
+        - columnheader "Jardim Juliana"
+        - columnheader "Magalhães"
+        - columnheader "Ações"
+    - rowgroup:
+      - row "Milho kg Editar Milho Desativar Milho":
+        - cell "Milho"
+        - cell "kg"
+        - cell
+        - cell
+        - cell
+        - cell "Editar Milho Desativar Milho":
+          - link "Editar Milho":
+            - /url: /produtos
+          - button "Desativar Milho"
+      - row "Ervilha kg Editar Ervilha Desativar Ervilha":
+        - cell "Ervilha"
+        - cell "kg"
+        - cell
+        - cell
+        - cell
+        - cell "Editar Ervilha Desativar Ervilha":
+          - link "Editar Ervilha":
+            - /url: /produtos
+          - button "Desativar Ervilha"
+      - row "Tomate kg Editar Tomate Desativar Tomate":
+        - cell "Tomate"
+        - cell "kg"
+        - cell
+        - cell
+        - cell
+        - cell "Editar Tomate Desativar Tomate":
+          - link "Editar Tomate":
+            - /url: /produtos
+          - button "Desativar Tomate"
+      - row "Cebola kg Editar Cebola Desativar Cebola":
+        - cell "Cebola"
+        - cell "kg"
+        - cell
+        - cell
+        - cell
+        - cell "Editar Cebola Desativar Cebola":
+          - link "Editar Cebola":
+            - /url: /produtos
+          - button "Desativar Cebola"
+      - row "Maionese L Editar Maionese Desativar Maionese":
+        - cell "Maionese"
+        - cell "L"
+        - cell
+        - cell
+        - cell
+        - cell "Editar Maionese Desativar Maionese":
+          - link "Editar Maionese":
+            - /url: /produtos
+          - button "Desativar Maionese"
+      - row "Mostarda L Editar Mostarda Desativar Mostarda":
+        - cell "Mostarda"
+        - cell "L"
+        - cell
+        - cell
+        - cell
+        - cell "Editar Mostarda Desativar Mostarda":
+          - link "Editar Mostarda":
+            - /url: /produtos
+          - button "Desativar Mostarda"
+      - row "Salsicha unidade Editar Salsicha Desativar Salsicha":
+        - cell "Salsicha"
+        - cell "unidade"
+        - cell
+        - cell
+        - cell
+        - cell "Editar Salsicha Desativar Salsicha":
+          - link "Editar Salsicha":
+            - /url: /produtos
+          - button "Desativar Salsicha"
+      - row "Pão unidade Editar Pão Desativar Pão":
+        - cell "Pão"
+        - cell "unidade"
+        - cell
+        - cell
+        - cell
+        - cell "Editar Pão Desativar Pão":
+          - link "Editar Pão":
+            - /url: /produtos
+          - button "Desativar Pão"
+  - navigation "Paginação":
+    - paragraph: Mostrando 1 a 8 de 9 produtos
+    - combobox "Itens por página":
+      - option "8 por página" [selected]
+      - option "16 por página"
+      - option "24 por página"
+    - button [disabled]:
+      - img
+    - button "1"
+    - button "2"
+    - button:
+      - img
+- alert

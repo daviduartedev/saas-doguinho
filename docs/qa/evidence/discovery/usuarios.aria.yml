@@ -1,0 +1,51 @@
+- complementary:
+  - link "Doguinho do Corujá":
+    - /url: /fechamento
+    - img "Doguinho do Corujá"
+  - navigation:
+    - link "Dashboard":
+      - /url: /dashboard?loja=todas
+    - link "Fechamento":
+      - /url: /fechamento?loja=todas
+    - link "Estoque":
+      - /url: /estoque?loja=todas
+    - link "Histórico":
+      - /url: /historico?loja=todas
+    - link "Produtos":
+      - /url: /produtos?loja=todas
+    - link "Usuários":
+      - /url: /usuarios?loja=todas
+    - link "Perfis":
+      - /url: /perfis?loja=todas
+    - link "Configurações":
+      - /url: /configuracoes?loja=todas
+  - button "Sair"
+- banner:
+  - combobox: Todas as Lojas
+  - paragraph: Dono · Dono
+- main:
+  - heading "Usuários" [level=1]
+  - paragraph: E-mail, senha inicial, Perfil e Vínculo com Lojas. Loja não entra no checklist do Perfil.
+  - heading "Novo usuário" [level=2]
+  - text: Nome
+  - textbox "Nome"
+  - text: E-mail
+  - textbox "E-mail"
+  - text: Senha inicial
+  - textbox "Senha inicial"
+  - text: Perfil
+  - combobox "Perfil":
+    - option "Operador" [selected]
+  - group "Vínculo":
+    - text: Vínculo
+    - checkbox "Centro"
+    - text: Centro
+    - checkbox "Jardim Juliana"
+    - text: Jardim Juliana
+    - checkbox "Magalhães"
+    - text: Magalhães
+  - button "Criar usuário"
+  - list:
+    - listitem:
+      - paragraph: Dono dono@doguinho.localDono
+- alert

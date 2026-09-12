@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "audit-context-building": {
+      "source": "trailofbits/skills",
+      "sourceType": "github",
+      "skillPath": "plugins/audit-context-building/skills/audit-context-building/SKILL.md",
+      "computedHash": "2be01c4c6ac9afef097f021c78cddd5aacc27659d503a3f88b5cdbc473a41191"
+    }
+  }
+}

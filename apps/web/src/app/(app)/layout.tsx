@@ -1,5 +1,4 @@
-import { actorDaSessao } from "@/doguinho/sessao";
-import { redirect } from "next/navigation";
+import { exigirActor } from "@/doguinho/sessao";
 import type { ReactNode } from "react";
 
 export default async function AppGroupLayout({
@@ -7,7 +6,7 @@ export default async function AppGroupLayout({
 }: {
   children: ReactNode;
 }) {
-  const actor = await actorDaSessao();
-  if (!actor) redirect("/entrar");
+  // exigirActor cuida dos dois casos: sem cookie → /entrar; cookie inválido → /sair (QA-002)
+  await exigirActor();
   return children;
 }

@@ -1,0 +1,38 @@
+- complementary:
+  - link "Doguinho do Corujá":
+    - /url: /fechamento
+    - img "Doguinho do Corujá"
+  - navigation:
+    - link "Dashboard":
+      - /url: /dashboard?loja=todas
+    - link "Fechamento":
+      - /url: /fechamento?loja=todas
+    - link "Estoque":
+      - /url: /estoque?loja=todas
+    - link "Histórico":
+      - /url: /historico?loja=todas
+    - link "Produtos":
+      - /url: /produtos?loja=todas
+    - link "Usuários":
+      - /url: /usuarios?loja=todas
+    - link "Perfis":
+      - /url: /perfis?loja=todas
+    - link "Configurações":
+      - /url: /configuracoes?loja=todas
+  - button "Sair"
+- banner:
+  - combobox: Todas as Lojas
+  - paragraph: Dono · Dono
+- main:
+  - heading "Configurações" [level=1]
+  - paragraph: Lojas da Organização. Uma Loja nova entra no mesmo cadastro de Produtos.
+  - heading "Nova Loja" [level=2]
+  - text: Nome
+  - textbox "Nome"
+  - button "Criar Loja"
+  - heading "Lojas" [level=2]
+  - list:
+    - listitem: Centro
+    - listitem: Jardim Juliana
+    - listitem: Magalhães
+- alert
