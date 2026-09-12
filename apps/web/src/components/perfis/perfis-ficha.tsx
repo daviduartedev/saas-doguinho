@@ -23,7 +23,7 @@ export function PerfisFicha({
   return (
     <form
       action={editing ? editarPerfilAction : criarPerfilAction}
-      className="listing-pad space-y-4 rounded-md bg-sheet"
+      className="listing-pad space-y-4 rounded-lg border border-border bg-sheet"
     >
       {perfil ? <input type="hidden" name="id" value={perfil.id} /> : null}
       {lojaId ? <input type="hidden" name="loja" value={lojaId} /> : null}

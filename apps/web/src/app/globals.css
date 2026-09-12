@@ -28,7 +28,7 @@
   --destructive: var(--ketchup);
   --destructive-foreground: #fffdf9;
   --control: #efe8de;
-  --radius: 8px;
+  --radius: 10px;
   --page-gutter: 1.5rem;
   --listing-px: 1.25rem;
   --listing-py: 0.875rem;
@@ -58,6 +58,12 @@ body {
   padding: var(--listing-py) var(--listing-px);
 }
 
+.listing-frame {
+  overflow: hidden;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
 @media (min-width: 768px) {
   :root {
     --page-gutter: 2.5rem;
@@ -71,7 +77,7 @@ body {
 }
 
 .skeleton {
-  border-radius: 8px;
+  border-radius: var(--radius);
   background: var(--counter);
   animation: steam 1.2s ease-in-out infinite;
 }

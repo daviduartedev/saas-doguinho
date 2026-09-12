@@ -24,8 +24,12 @@ export async function criarLojaAction(formData: FormData): Promise<void> {
   try {
     const app = await getApp();
     await app.criarLoja(actor, { nome: String(formData.get("nome") ?? "") });
+    revalidatePath("/configuracoes");
     revalidatePath("/dashboard");
     revalidatePath("/estoque");
+    const loja = String(formData.get("loja") ?? "");
+    if (/^[a-zA-Z0-9_-]+$/.test(loja)) redirect(`/configuracoes?loja=${loja}`);
+    redirect("/configuracoes");
   } catch (error) {
     fail(error);
   }

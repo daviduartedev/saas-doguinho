@@ -6,11 +6,6 @@ export function AppShellSkeleton() {
     <div className="min-h-screen bg-paper md:grid md:grid-cols-[272px_1fr]">
       <aside className="hidden bg-awning md:flex md:flex-col">
         <SidebarMarca />
-        <div className="flex flex-1 flex-col gap-1 px-3">
-          {Array.from({ length: 6 }).map((_, index) => (
-            <Skeleton key={index} className="h-12 bg-white/20" />
-          ))}
-        </div>
       </aside>
       <div className="flex min-h-screen flex-col">
         <header className="page-gutter flex h-[60px] items-center justify-between border-b border-border bg-sheet py-3">
@@ -31,7 +26,7 @@ export function AppShellSkeleton() {
               <Skeleton className="h-9 w-24" />
               <Skeleton className="h-9 w-32" />
             </div>
-            <div className="space-y-2 rounded-md bg-sheet p-4">
+            <div className="space-y-2 rounded-lg border border-border bg-sheet p-4">
               {Array.from({ length: 7 }).map((_, index) => (
                 <Skeleton key={index} className="h-12 w-full" />
               ))}

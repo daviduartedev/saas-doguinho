@@ -33,7 +33,7 @@ Brand red is for action, selection, and punctual state, not decoration.
 
 ## Rejected defaults
 
-- KPI cards / charts / widget grid → remaining-count table and Fechamento list
+- KPI cards / charts on Fechamento and Estoque → remaining-count table. Dashboard is the exception: shadcn KPI cards + area chart, driven by the header Loja filter.
 - Muted/opaque selected nav → vivid ketchup-hot
 - Inter + gray-700 tokens → Red Hat + ketchup/paper/ink
 - Movement (in/out) UI → quantidade restante only
@@ -41,7 +41,7 @@ Brand red is for action, selection, and punctual state, not decoration.
 
 ## Depth
 
-Borders and surface tint only. Login card has no heavy drop shadow. Radius 6 / 8 / 10.
+Borders and surface tint only. Login card has no heavy drop shadow. Radius 8 / 10 / 12. Listings use `.listing-frame` (overflow hidden + radius).
 
 ## Type
 
@@ -55,12 +55,13 @@ Red Hat Display (wordmark, titles) + Red Hat Text (UI). Ratio ~1.25 from 15px bo
 
 - Brand lockup: owl + boxes + laptop + checklist, wordmark Doguinho do Corujá. Same PNG on login card and sidebar header, on the surface behind it (no fake login screenshot).
 - Button: Mantine, ketchup filled. Default 44px h. Form CTAs (`Guardar rascunho`, `Enviar fechamento`) use size sm and sit right-aligned, not full-width. Spinner + disabled while the request is in flight.
-- Input: darker `--control` inset · 8px radius · ketchup focus ring
+- Input: darker `--control` inset · 10px radius · ketchup focus ring
 - Select open/checked: ketchup fill or ketchup text, never a gray pill
 - Nav active: ketchup-hot + pena
 - Status chip: solid ketchup/mustard/counter, not translucent
 - Loading: skeleton bones for header, KPIs/chips, and tables
 - Listing table: ketchup thead, mustard status chip under a Loja only for rascunho/enviado/correção, sheet rows, blank empty cells. Toolbar: search + Adicionar produto. Footer: “Mostrando X a Y de Z” + page size + Mantine Pagination (active page is a ketchup disc).
+- Dashboard: four KPI cards + shadcn/recharts area chart. Header Loja filter only (Todas as Lojas or one Loja). Nova Loja lives in Configurações, not on the Dashboard.
 
 ## Auth screen
 

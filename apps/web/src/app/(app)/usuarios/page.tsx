@@ -10,7 +10,7 @@ import {
   desligarUsuarioAction,
 } from "@/doguinho/admin-actions";
 import { actorCan } from "@/doguinho/view";
-import { loadWorkspace } from "@/doguinho/workspace";
+import { loadWorkspace, shellFrom } from "@/doguinho/workspace";
 import { Pager } from "@/components/ui/pager";
 import { paginate } from "@/lib/pagination";
 import { redirect } from "next/navigation";
@@ -23,14 +23,15 @@ export default async function UsuariosPage({
   searchParams: Promise<{ loja?: string; page?: string }>;
 }) {
   const { loja, page } = await searchParams;
-  const { actor, lojas, lojaId, snap, app } = await loadWorkspace(loja);
+  const workspace = await loadWorkspace(loja);
+  const { actor, lojas, filtro, app } = workspace;
   if (!actorCan(actor, "manage_users")) redirect("/fechamento");
   const users = await app.listarUsuarios(actor);
   const listing = paginate(users, page);
   const perfis = await app.listarPerfis(actor);
 
   return (
-    <AppShell lojas={lojas} lojaId={lojaId} actor={actor} status={snap?.status ?? null}>
+    <AppShell {...shellFrom(workspace)}>
       <PageCanvas>
         <header>
           <h1 className="font-display text-3xl font-bold text-ink">Usuários</h1>
@@ -40,7 +41,7 @@ export default async function UsuariosPage({
         </header>
 
         {actor.isDono || actorCan(actor, "manage_users") ? (
-          <form action={criarUsuarioAction} className="listing-pad space-y-3 rounded-md bg-sheet">
+          <form action={criarUsuarioAction} className="listing-pad space-y-3 rounded-lg border border-border bg-sheet">
             <h2 className="font-display text-lg font-bold">Novo usuário</h2>
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
@@ -80,7 +81,7 @@ export default async function UsuariosPage({
                       type="checkbox"
                       name="lojaIds"
                       value={item.id}
-                      className="h-5 w-5 rounded-[6px] border-border accent-[var(--ketchup)]"
+                      className="h-5 w-5 rounded-sm border-border accent-[var(--ketchup)]"
                     />
                     {item.nome}
                   </label>
@@ -93,7 +94,7 @@ export default async function UsuariosPage({
 
         <ul className="space-y-3">
           {listing.items.map((user) => (
-            <li key={user.id} className="listing-pad rounded-md bg-sheet">
+            <li key={user.id} className="listing-pad rounded-lg border border-border bg-sheet">
               <p className="font-semibold">
                 {user.nome}{" "}
                 <span className="text-sm font-medium text-steam">{user.email}</span>
@@ -113,7 +114,7 @@ export default async function UsuariosPage({
                             name="lojaIds"
                             value={item.id}
                             defaultChecked={user.lojaIds.includes(item.id)}
-                            className="h-5 w-5 rounded-[6px] border-border accent-[var(--ketchup)]"
+                            className="h-5 w-5 rounded-sm border-border accent-[var(--ketchup)]"
                           />
                           {item.nome}
                         </label>
@@ -161,7 +162,7 @@ export default async function UsuariosPage({
           pathname="/usuarios"
           page={listing.page}
           totalPages={listing.totalPages}
-          params={{ loja: lojaId }}
+          params={{ loja: filtro }}
         />
       </PageCanvas>
     </AppShell>

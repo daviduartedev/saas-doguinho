@@ -19,7 +19,7 @@ export default async function EntrarPage({
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-ketchup px-4 py-10">
       <LoginBackdrop />
 
-      <section className="relative z-10 w-full max-w-[520px] rounded-[10px] bg-sheet px-10 pb-10 pt-8 md:max-w-[560px] md:px-12 md:pb-12 md:pt-10">
+      <section className="relative z-10 w-full max-w-[520px] rounded-lg bg-sheet px-10 pb-10 pt-8 md:max-w-[560px] md:px-12 md:pb-12 md:pt-10">
         <div className="flex flex-col items-center text-center">
           <MarcaDoguinho
             priority
