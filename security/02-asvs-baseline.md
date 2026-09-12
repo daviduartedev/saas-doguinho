@@ -31,7 +31,7 @@ Capítulos da skill `security-guidance` aplicáveis. Level 1 como mínimo. Level
 | V11.2 / V11.4 / V11.5 | Libs de crypto, hash, RNG de sessão |
 | V12.2 HTTPS | Vercel público |
 | V12.3 Service to Service | App → Neon |
-| V13.3 Secret Management | DATABASE_URL, secret de sessão — env, nunca git |
+| V13.3 Secret Management | DATABASE_URL, secret de sessão: env, nunca git |
 | V13.4 Unintended Information Leakage | Erros genéricos |
 | V14.1 / V14.2 Data Protection | Estoque e e-mail |
 | V15.2 Security Architecture and Dependencies | Dependências Next |

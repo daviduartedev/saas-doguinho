@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
@@ -15,16 +16,17 @@ import {
 import { sairAction } from "@/doguinho/actions";
 import { actorCan, rotuloStatus } from "@/doguinho/view";
 import type { Actor, FechamentoStatus, Loja } from "@/doguinho/types";
+import { SidebarMarca } from "@/components/brand/sidebar-marca";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { cn } from "@/lib/utils";
 
 function navItems(actor: Actor) {
   const items = [
+    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, show: actorCan(actor, "dashboard") },
     { href: "/fechamento", label: "Fechamento", icon: ClipboardList, show: actorCan(actor, "submit_fechamento") || actorCan(actor, "submit_correcao") },
     { href: "/estoque", label: "Estoque", icon: Package, show: actorCan(actor, "read_estoque") },
     { href: "/historico", label: "Histórico", icon: History, show: actorCan(actor, "read_history") },
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, show: actorCan(actor, "dashboard") },
     { href: "/produtos", label: "Produtos", icon: Package, show: actorCan(actor, "manage_produto") },
     { href: "/usuarios", label: "Usuários", icon: Users, show: actorCan(actor, "manage_users") },
     { href: "/perfis", label: "Perfis", icon: Shield, show: actor.isDono },
@@ -39,7 +41,7 @@ export function AppShell({
   actor,
   status,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   lojas: Loja[];
   lojaId: string;
   actor: Actor;
@@ -53,20 +55,14 @@ export function AppShell({
   function escolherLoja(id: string) {
     const next = new URLSearchParams(params);
     next.set("loja", id);
+    next.delete("page");
     router.push(`${pathname}?${next.toString()}`);
   }
 
   return (
-    <div className="min-h-screen bg-paper md:grid md:grid-cols-[212px_1fr]">
+    <div className="min-h-screen bg-paper md:grid md:grid-cols-[272px_1fr]">
       <aside className="hidden bg-awning text-white md:flex md:flex-col">
-        <div className="px-5 pb-6 pt-7">
-          <p className="font-display text-xl font-extrabold leading-none tracking-tight">
-            Doguinho
-          </p>
-          <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-feather">
-            do Corujá
-          </p>
-        </div>
+        <SidebarMarca />
         <nav className="flex flex-1 flex-col gap-1 px-3">
           {nav.map((item) => {
             const ativo = pathname.startsWith(item.href);
@@ -77,7 +73,7 @@ export function AppShell({
                 key={item.href}
                 href={href}
                 className={cn(
-                  "relative flex h-11 items-center gap-3 rounded-md px-3 text-sm font-semibold",
+                  "relative flex h-12 items-center gap-3 rounded-md px-3 text-[15px] font-semibold",
                   ativo ? "bg-ketchup-hot text-white" : "text-white hover:bg-ketchup-hot",
                 )}
               >
@@ -89,20 +85,20 @@ export function AppShell({
           })}
         </nav>
         <form action={sairAction} className="p-3">
-          <Button variant="awning" className="w-full justify-start gap-3 px-3 text-white hover:bg-ketchup-hot" type="submit">
+          <SubmitButton variant="awning" className="w-full justify-start gap-3 px-3 text-white hover:bg-ketchup-hot">
             <LogOut className="h-4 w-4" />
             Sair
-          </Button>
+          </SubmitButton>
         </form>
       </aside>
 
       <div className="flex min-h-screen flex-col">
-        <header className="flex items-center justify-between gap-3 border-b border-border bg-sheet px-4 py-3 md:px-8">
+        <header className="page-gutter relative z-20 flex items-center justify-between gap-3 overflow-visible border-b border-border bg-sheet py-3">
           <div className="flex min-w-0 items-center gap-3">
-            <Store className="h-4 w-4 text-ketchup" />
+            <Store className="h-4 w-4 shrink-0 text-ketchup" />
             {lojas.length > 0 ? (
               <Select value={lojaId} onValueChange={escolherLoja}>
-                <SelectTrigger className="h-10 w-[11rem] border-ketchup text-ketchup data-[state=open]:bg-ketchup data-[state=open]:text-white">
+                <SelectTrigger className="h-10 w-max min-w-[8rem] max-w-[18rem] border-transparent bg-transparent px-2 text-ink data-[state=open]:border-ketchup data-[state=open]:bg-ketchup data-[state=open]:text-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -114,16 +110,16 @@ export function AppShell({
                 </SelectContent>
               </Select>
             ) : (
-              <span className="text-sm text-steam">Sem Loja no Vínculo</span>
+              <span className="text-[15px] text-steam">Sem Loja no Vínculo</span>
             )}
-            {status ? <StatusChip status={status} /> : null}
+            {status && rotuloStatus(status) ? <StatusChip status={status} /> : null}
           </div>
-          <p className="hidden text-sm text-steam md:block">
+          <p className="hidden text-[15px] text-steam md:block">
             {actor.isDono ? "Dono" : "Operador"} · {actor.nome}
           </p>
         </header>
 
-        <main className="flex-1 px-4 py-5 md:px-8 md:py-7">{children}</main>
+        <main className="page-gutter flex-1 py-6 md:py-8">{children}</main>
 
         <nav className="flex overflow-x-auto border-t border-border bg-awning md:hidden">
           {nav.map((item) => {
@@ -152,15 +148,16 @@ export function AppShell({
 }
 
 function StatusChip({ status }: { status: FechamentoStatus }) {
-  const map: Record<FechamentoStatus, string> = {
-    nunca_fechou: "bg-counter text-ink",
+  const label = rotuloStatus(status);
+  if (!label || status === "nunca_fechou") return null;
+  const map = {
     rascunho: "bg-mustard text-ink",
     enviado: "bg-ketchup text-white",
     correcao_necessaria: "bg-ketchup-hot text-white",
-  };
+  } as const;
   return (
     <span className={cn("rounded-md px-2.5 py-1 text-xs font-semibold", map[status])}>
-      {rotuloStatus(status)}
+      {label}
     </span>
   );
 }

@@ -1,79 +1,102 @@
 import { AppShell } from "@/components/shell/app-shell";
+import { PageCanvas } from "@/components/ui/page-canvas";
+import { ListingPager } from "@/components/ui/pager";
+import { EstoqueTabela } from "@/components/estoque/estoque-tabela";
+import { EstoqueToolbar } from "@/components/estoque/estoque-toolbar";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { SubmitButton } from "@/components/ui/submit-button";
+import { criarProdutoAction } from "@/doguinho/admin-actions";
 import type { EstoqueView } from "@/doguinho/types";
-import { rotuloStatus } from "@/doguinho/view";
+import { UNIDADES } from "@/doguinho/types";
+import { actorCan } from "@/doguinho/view";
 import { loadWorkspace } from "@/doguinho/workspace";
+import { paginate, parseListingQuery } from "@/lib/pagination";
 
 export const dynamic = "force-dynamic";
 
 export default async function EstoquePage({
   searchParams,
 }: {
-  searchParams: Promise<{ loja?: string }>;
+  searchParams: Promise<{ loja?: string; page?: string; per?: string; q?: string; novo?: string }>;
 }) {
-  const { loja } = await searchParams;
+  const { loja, page, per, q, novo } = await searchParams;
   const { actor, lojas, lojaId, snap, produtos, app } = await loadWorkspace(loja);
-  const ativos = produtos.filter((produto) => produto.ativo);
+  const query = parseListingQuery(q);
+  const ativos = produtos.filter(
+    (produto) =>
+      produto.ativo &&
+      (!query || produto.nome.toLocaleLowerCase("pt-BR").includes(query.toLocaleLowerCase("pt-BR"))),
+  );
   const visao: EstoqueView[] = [];
   for (const item of lojas) {
     visao.push(await app.estoqueDaLoja(actor, item.id));
   }
+  const listing = paginate(ativos, page, per);
+  const podeGerir = actorCan(actor, "manage_produto");
+  const mostrarNovo = novo === "1" && podeGerir;
 
   return (
     <AppShell lojas={lojas} lojaId={lojaId} actor={actor} status={snap?.status ?? null}>
-      <div className="mx-auto max-w-5xl">
-        <header className="mb-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-steam">
-            {actor.isDono ? "Todas as Lojas" : "Sua Loja"}
-          </p>
-          <h1 className="mt-1 font-display text-3xl font-bold text-ink">Estoque</h1>
-          <p className="mt-2 max-w-xl text-sm text-steam">
-            Número oficial = quantidade restante do último Fechamento enviado. Rascunho não conta.
-          </p>
+      <PageCanvas>
+        <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <h1 className="font-display text-3xl font-bold text-ink">Estoque</h1>
+            <p className="mt-2 max-w-xl text-sm text-steam">
+              Número oficial = quantidade restante do último Fechamento enviado. Rascunho não conta.
+            </p>
+          </div>
+          <EstoqueToolbar lojaId={lojaId} query={query} podeGerir={podeGerir} />
         </header>
+
+        {mostrarNovo ? (
+          <form
+            action={criarProdutoAction}
+            className="listing-pad grid gap-3 rounded-md bg-sheet sm:grid-cols-[1fr_8rem_auto]"
+          >
+            <div>
+              <Label htmlFor="nome">Nome</Label>
+              <Input id="nome" name="nome" required className="mt-1" />
+            </div>
+            <div>
+              <Label htmlFor="unidade">Unidade</Label>
+              <select
+                id="unidade"
+                name="unidade"
+                className="mt-1 h-11 w-full rounded-md border border-border bg-[var(--control)] px-3 text-sm"
+              >
+                {UNIDADES.map((unidade) => (
+                  <option key={unidade} value={unidade}>
+                    {unidade}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-end">
+              <SubmitButton>Cadastrar</SubmitButton>
+            </div>
+          </form>
+        ) : null}
 
         {visao.length === 0 ? (
           <p className="text-sm text-steam">Sem Loja no Vínculo.</p>
         ) : (
-          <div className="overflow-x-auto rounded-md bg-sheet">
-            <table className="w-full min-w-[640px] border-collapse text-sm">
-              <thead>
-                <tr className="border-b border-border text-left">
-                  <th className="px-4 py-3 font-semibold text-steam">Produto</th>
-                  <th className="px-4 py-3 font-semibold text-steam">Unidade</th>
-                  {visao.map((coluna) => (
-                    <th key={coluna.loja.id} className="px-4 py-3 font-semibold text-ink">
-                      <span className="block">{coluna.loja.nome}</span>
-                      <span className="text-xs font-medium text-ketchup">
-                        {rotuloStatus(coluna.status)}
-                      </span>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {ativos.map((produto) => (
-                  <tr key={produto.id} className="border-b border-border last:border-0">
-                    <td className="px-4 py-3 font-semibold">{produto.nome}</td>
-                    <td className="px-4 py-3 text-steam">{produto.unidade}</td>
-                    {visao.map((coluna) => {
-                      const valor = coluna.valores[produto.id];
-                      return (
-                        <td key={coluna.loja.id} className="tabular px-4 py-3 text-right text-base font-semibold">
-                          {valor === null || valor === undefined ? (
-                            <span className="font-medium text-steam">nunca fechou</span>
-                          ) : (
-                            valor
-                          )}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div>
+            <EstoqueTabela visao={visao} produtos={listing.items} podeGerir={podeGerir} />
+            <ListingPager
+              pathname="/estoque"
+              page={listing.page}
+              totalPages={listing.totalPages}
+              total={listing.total}
+              size={listing.size}
+              from={listing.from}
+              to={listing.to}
+              params={{ loja: lojaId, q: query || undefined, per: String(listing.size) }}
+              noun="produtos"
+            />
           </div>
         )}
-      </div>
+      </PageCanvas>
     </AppShell>
   );
 }

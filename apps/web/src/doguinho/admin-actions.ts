@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { AppError, ValidationError } from "./errors";
 import { ALL_PERMISSIONS } from "./seed";
 import { getApp } from "./runtime";
@@ -10,6 +11,12 @@ import { UNIDADES } from "./types";
 
 function fail(error: unknown): never {
   throw error instanceof AppError ? error : new Error("Não foi possível salvar.");
+}
+
+function voltarPerfis(formData: FormData): never {
+  const loja = String(formData.get("loja") ?? "");
+  if (/^[a-zA-Z0-9_-]+$/.test(loja)) redirect(`/perfis?loja=${loja}`);
+  redirect("/perfis");
 }
 
 export async function criarLojaAction(formData: FormData): Promise<void> {
@@ -36,6 +43,7 @@ export async function criarProdutoAction(formData: FormData): Promise<void> {
     });
     revalidatePath("/produtos");
     revalidatePath("/fechamento");
+    revalidatePath("/estoque");
   } catch (error) {
     fail(error);
   }
@@ -65,6 +73,7 @@ export async function desativarProdutoAction(formData: FormData): Promise<void> 
     await app.desativarProduto(actor, { id: String(formData.get("id") ?? "") });
     revalidatePath("/produtos");
     revalidatePath("/fechamento");
+    revalidatePath("/estoque");
   } catch (error) {
     fail(error);
   }
@@ -83,6 +92,7 @@ export async function criarPerfilAction(formData: FormData): Promise<void> {
   } catch (error) {
     fail(error);
   }
+  voltarPerfis(formData);
 }
 
 export async function editarPerfilAction(formData: FormData): Promise<void> {
@@ -99,6 +109,7 @@ export async function editarPerfilAction(formData: FormData): Promise<void> {
   } catch (error) {
     fail(error);
   }
+  voltarPerfis(formData);
 }
 
 export async function criarUsuarioAction(formData: FormData): Promise<void> {

@@ -6,6 +6,8 @@ import type { FechamentoStatus, Produto, QuantidadeLinha, UnidadeMedida } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ClientPager } from "@/components/ui/pager";
+import { LISTING_PAGE_SIZE } from "@/lib/pagination";
 
 function teclado(unidade: UnidadeMedida) {
   return unidade === "unidade" || unidade === "pacote" ? "numeric" : "decimal";
@@ -28,6 +30,10 @@ export function FechamentoForm({
 }) {
   const ativos = produtos.filter((produto) => produto.ativo);
   const [linhas, setLinhas] = useState(linhasIniciais);
+  const [page, setPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(ativos.length / LISTING_PAGE_SIZE) || 1);
+  const safePage = Math.min(page, totalPages);
+  const pageItems = ativos.slice((safePage - 1) * LISTING_PAGE_SIZE, safePage * LISTING_PAGE_SIZE);
   const [justificativa, setJustificativa] = useState("");
   const [erro, setErro] = useState<string | null>(null);
   const [ok, setOk] = useState(false);
@@ -69,13 +75,12 @@ export function FechamentoForm({
   }
 
   return (
-    <div className="mx-auto max-w-xl">
+    <div className="w-full">
       <header className="mb-5">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-steam">Encerramento</p>
-        <h1 className="mt-1 font-display text-3xl font-bold text-ink text-balance">
+        <h1 className="font-display text-3xl font-bold text-ink text-balance">
           Fechamento · {lojaNome}
         </h1>
-        <p className="mt-2 max-w-md text-sm text-steam">
+        <p className="mt-2 max-w-2xl text-[15px] text-steam">
           Informe a quantidade restante de cada Produto ativo. Isso vira o Estoque oficial da Loja.
         </p>
       </header>
@@ -92,28 +97,38 @@ export function FechamentoForm({
         </p>
       ) : null}
 
-      {status === "nunca_fechou" ? (
-        <p className="mb-4 rounded-md border border-border bg-sheet px-3 py-2 text-sm">
-          Esta Loja ainda não tem Estoque oficial — não inventamos zero.
-        </p>
-      ) : null}
-
       {status === "rascunho" ? (
         <p className="mb-4 rounded-md border border-mustard bg-sheet px-3 py-2 text-sm">
           Rascunho na Loja. Ainda não é Estoque.
         </p>
       ) : null}
 
-      <ol className="space-y-2">
-        {ativos.map((produto) => (
-          <LinhaProduto
-            key={produto.id}
-            produto={produto}
-            valor={linhas.find((linha) => linha.produtoId === produto.id)?.restante ?? null}
-            onChange={(raw) => setRestante(produto.id, raw)}
-          />
-        ))}
-      </ol>
+      <table className="w-full border-collapse text-sm">
+        <thead>
+          <tr className="bg-ketchup text-white">
+            <th className="listing-cell text-left font-semibold">Produto</th>
+            <th className="listing-cell text-left font-semibold">Unidade</th>
+            <th className="listing-cell text-right font-semibold">Quantidade restante</th>
+          </tr>
+        </thead>
+        <tbody className="bg-sheet">
+          {pageItems.map((produto) => (
+            <LinhaProduto
+              key={produto.id}
+              produto={produto}
+              valor={linhas.find((linha) => linha.produtoId === produto.id)?.restante ?? null}
+              onChange={(raw) => setRestante(produto.id, raw)}
+            />
+          ))}
+        </tbody>
+      </table>
+      <ClientPager
+        page={safePage}
+        totalPages={totalPages}
+        total={ativos.length}
+        size={LISTING_PAGE_SIZE}
+        onPage={setPage}
+      />
 
       {precisaCorrecao ? (
         <div className="mt-4">
@@ -131,11 +146,12 @@ export function FechamentoForm({
       {erro ? <p className="mt-3 text-sm font-medium text-ketchup">{erro}</p> : null}
       {ok ? <p className="mt-3 text-sm font-medium text-ink">Enviado. Isso é o Estoque agora.</p> : null}
 
-      <div className="sticky bottom-16 mt-5 flex gap-2 bg-paper py-3 md:bottom-0">
+      <div className="sticky bottom-16 mt-5 flex justify-end gap-2 bg-paper py-3 md:bottom-0">
         <Button
           type="button"
           variant="outline"
-          className="flex-1"
+          size="sm"
+          pending={pending}
           disabled={pending || ativos.length === 0}
           onClick={() =>
             start(async () => {
@@ -147,7 +163,8 @@ export function FechamentoForm({
         </Button>
         <Button
           type="button"
-          className="flex-[2]"
+          size="sm"
+          pending={pending}
           disabled={pending || ativos.length === 0}
           onClick={() =>
             start(async () => {
@@ -174,20 +191,20 @@ function LinhaProduto({
   onChange: (raw: string) => void;
 }) {
   return (
-    <li className="flex items-center gap-3 rounded-md bg-sheet px-3 py-2">
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold text-ink">{produto.nome}</p>
-        <p className="text-xs text-steam">{produto.unidade}</p>
-      </div>
-      <Input
-        type="text"
-        inputMode={teclado(produto.unidade)}
-        value={valor ?? ""}
-        onChange={(event) => onChange(event.target.value)}
-        aria-label={`Quantidade restante de ${produto.nome}`}
-        className="tabular h-12 w-28 text-right text-lg font-semibold"
-        placeholder="—"
-      />
-    </li>
+    <tr className="border-b border-border last:border-0">
+      <td className="listing-cell font-semibold text-ink">{produto.nome}</td>
+      <td className="listing-cell text-steam">{produto.unidade}</td>
+      <td className="listing-cell text-right">
+        <Input
+          type="text"
+          inputMode={teclado(produto.unidade)}
+          value={valor ?? ""}
+          onChange={(event) => onChange(event.target.value)}
+          aria-label={`Quantidade restante de ${produto.nome}`}
+          className="tabular ml-auto h-12 w-28 text-right text-lg font-semibold"
+          placeholder=""
+        />
+      </td>
+    </tr>
   );
 }

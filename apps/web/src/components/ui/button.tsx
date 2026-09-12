@@ -1,40 +1,88 @@
-import * as React from "react";
-import { Slot } from "@radix-ui/react-slot";
+"use client";
+
+import type { ButtonHTMLAttributes } from "react";
+import { Button as MantineButton } from "@mantine/core";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
-const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-semibold transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]",
-  {
-    variants: {
-      variant: {
-        primary: "bg-ketchup text-primary-foreground hover:bg-ketchup-hot",
-        outline: "border border-border bg-sheet text-ink hover:bg-paper",
-        ghost: "text-ink hover:bg-counter",
-        awning: "bg-awning text-white hover:bg-ketchup-hot",
-      },
-      size: {
-        default: "h-11 px-4",
-        sm: "h-9 px-3 text-sm",
-        lg: "h-12 px-5",
-        icon: "h-10 w-10",
-      },
+const buttonVariants = cva("", {
+  variants: {
+    variant: {
+      primary: "",
+      outline: "",
+      ghost: "",
+      awning: "",
     },
-    defaultVariants: {
-      variant: "primary",
-      size: "default",
+    size: {
+      default: "h-11",
+      sm: "",
+      lg: "",
+      icon: "!h-10 !w-10 !p-0",
     },
   },
-);
-
-export const Button = React.forwardRef<
-  HTMLButtonElement,
-  React.ButtonHTMLAttributes<HTMLButtonElement> &
-    VariantProps<typeof buttonVariants> & { asChild?: boolean }
->(({ className, variant, size, asChild = false, ...props }, ref) => {
-  const Comp = asChild ? Slot : "button";
-  return (
-    <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />
-  );
+  defaultVariants: {
+    variant: "primary",
+    size: "default",
+  },
 });
-Button.displayName = "Button";
+
+function mantineVariant(variant: VariantProps<typeof buttonVariants>["variant"]) {
+  if (variant === "outline") return "default" as const;
+  if (variant === "ghost") return "subtle" as const;
+  return "filled" as const;
+}
+
+function mantineSize(size: VariantProps<typeof buttonVariants>["size"]) {
+  if (size === "sm") return "sm" as const;
+  if (size === "lg") return "lg" as const;
+  if (size === "icon") return "compact-sm" as const;
+  return "md" as const;
+}
+
+export function Button({
+  className,
+  variant,
+  size,
+  pending = false,
+  children,
+  disabled,
+  type = "button",
+  ...props
+}: ButtonHTMLAttributes<HTMLButtonElement> &
+  VariantProps<typeof buttonVariants> & { pending?: boolean }) {
+  const busy = pending || Boolean(disabled);
+  const outline = variant === "outline";
+  const ghost = variant === "ghost";
+
+  return (
+    <MantineButton
+      type={type}
+      variant={mantineVariant(variant)}
+      size={mantineSize(size)}
+      color={outline || ghost ? undefined : "ketchup"}
+      className={cn(buttonVariants({ variant, size }), className)}
+      disabled={busy}
+      loading={pending}
+      loaderProps={{ type: "dots", color: outline || ghost ? "var(--ink)" : "white" }}
+      styles={{
+        root: outline
+          ? {
+              background: "var(--sheet)",
+              border: "1px solid var(--border)",
+              color: "var(--ink)",
+            }
+          : ghost
+            ? {
+                background: "transparent",
+                color: "inherit",
+              }
+            : undefined,
+      }}
+      {...props}
+    >
+      {children}
+    </MantineButton>
+  );
+}
+
+export { buttonVariants };

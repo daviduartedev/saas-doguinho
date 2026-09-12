@@ -1,7 +1,8 @@
 import { AppShell } from "@/components/shell/app-shell";
-import { Button } from "@/components/ui/button";
+import { PageCanvas } from "@/components/ui/page-canvas";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SubmitButton } from "@/components/ui/submit-button";
 import {
   alterarPerfilUsuarioAction,
   alterarVinculoAction,
@@ -10,6 +11,8 @@ import {
 } from "@/doguinho/admin-actions";
 import { actorCan } from "@/doguinho/view";
 import { loadWorkspace } from "@/doguinho/workspace";
+import { Pager } from "@/components/ui/pager";
+import { paginate } from "@/lib/pagination";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -17,27 +20,27 @@ export const dynamic = "force-dynamic";
 export default async function UsuariosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ loja?: string }>;
+  searchParams: Promise<{ loja?: string; page?: string }>;
 }) {
-  const { loja } = await searchParams;
+  const { loja, page } = await searchParams;
   const { actor, lojas, lojaId, snap, app } = await loadWorkspace(loja);
   if (!actorCan(actor, "manage_users")) redirect("/fechamento");
   const users = await app.listarUsuarios(actor);
+  const listing = paginate(users, page);
   const perfis = await app.listarPerfis(actor);
 
   return (
     <AppShell lojas={lojas} lojaId={lojaId} actor={actor} status={snap?.status ?? null}>
-      <div className="mx-auto max-w-3xl space-y-8">
+      <PageCanvas>
         <header>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-steam">Gente</p>
-          <h1 className="mt-1 font-display text-3xl font-bold text-ink">Usuários</h1>
+          <h1 className="font-display text-3xl font-bold text-ink">Usuários</h1>
           <p className="mt-2 max-w-xl text-sm text-steam">
             E-mail, senha inicial, Perfil e Vínculo com Lojas. Loja não entra no checklist do Perfil.
           </p>
         </header>
 
         {actor.isDono || actorCan(actor, "manage_users") ? (
-          <form action={criarUsuarioAction} className="space-y-3 rounded-md bg-sheet p-4">
+          <form action={criarUsuarioAction} className="listing-pad space-y-3 rounded-md bg-sheet">
             <h2 className="font-display text-lg font-bold">Novo usuário</h2>
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
@@ -84,13 +87,13 @@ export default async function UsuariosPage({
                 ))}
               </div>
             </fieldset>
-            <Button type="submit">Criar usuário</Button>
+            <SubmitButton>Criar usuário</SubmitButton>
           </form>
         ) : null}
 
         <ul className="space-y-3">
-          {users.map((user) => (
-            <li key={user.id} className="rounded-md bg-sheet p-4">
+          {listing.items.map((user) => (
+            <li key={user.id} className="listing-pad rounded-md bg-sheet">
               <p className="font-semibold">
                 {user.nome}{" "}
                 <span className="text-sm font-medium text-steam">{user.email}</span>
@@ -116,9 +119,9 @@ export default async function UsuariosPage({
                         </label>
                       ))}
                     </div>
-                    <Button type="submit" variant="outline" size="sm">
+                    <SubmitButton variant="outline" size="sm">
                       Atualizar Vínculo
-                    </Button>
+                    </SubmitButton>
                   </form>
                   {perfis.length > 0 ? (
                     <form action={alterarPerfilUsuarioAction} className="flex items-end gap-2">
@@ -138,23 +141,29 @@ export default async function UsuariosPage({
                           ))}
                         </select>
                       </div>
-                      <Button type="submit" variant="outline" size="sm">
+                      <SubmitButton variant="outline" size="sm">
                         Trocar Perfil
-                      </Button>
+                      </SubmitButton>
                     </form>
                   ) : null}
                   <form action={desligarUsuarioAction}>
                     <input type="hidden" name="userId" value={user.id} />
-                    <Button type="submit" variant="ghost" size="sm">
+                    <SubmitButton variant="ghost" size="sm">
                       Desligar
-                    </Button>
+                    </SubmitButton>
                   </form>
                 </div>
               ) : null}
             </li>
           ))}
         </ul>
-      </div>
+        <Pager
+          pathname="/usuarios"
+          page={listing.page}
+          totalPages={listing.totalPages}
+          params={{ loja: lojaId }}
+        />
+      </PageCanvas>
     </AppShell>
   );
 }

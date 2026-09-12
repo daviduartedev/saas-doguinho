@@ -29,6 +29,10 @@
   --destructive-foreground: #fffdf9;
   --control: #efe8de;
   --radius: 8px;
+  --page-gutter: 1.5rem;
+  --listing-px: 1.25rem;
+  --listing-py: 0.875rem;
+  --sidebar: 272px;
 }
 
 html {
@@ -38,10 +42,65 @@ html {
 body {
   background: var(--paper);
   color: var(--ink);
+  font-size: 15px;
+}
+
+.page-gutter {
+  padding-left: var(--page-gutter);
+  padding-right: var(--page-gutter);
+}
+
+.listing-cell {
+  padding: var(--listing-py) var(--listing-px);
+}
+
+.listing-pad {
+  padding: var(--listing-py) var(--listing-px);
+}
+
+@media (min-width: 768px) {
+  :root {
+    --page-gutter: 2.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --page-gutter: 3rem;
+  }
+}
+
+.skeleton {
+  border-radius: 8px;
+  background: var(--counter);
+  animation: steam 1.2s ease-in-out infinite;
+}
+
+@keyframes steam {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.88;
+  }
 }
 
 .tabular {
   font-variant-numeric: tabular-nums;
+}
+
+.mantine-Pagination-control {
+  font-weight: 600;
+  color: var(--ink);
+  border-color: var(--border);
+  background: var(--sheet);
+}
+
+.mantine-Pagination-control[data-active] {
+  background: var(--ketchup);
+  border-color: var(--ketchup);
+  color: #fffdf9;
 }
 
 .pena {

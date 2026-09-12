@@ -1,104 +1,97 @@
+import Link from "next/link";
+import { Plus } from "lucide-react";
 import { AppShell } from "@/components/shell/app-shell";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { criarPerfilAction, editarPerfilAction } from "@/doguinho/admin-actions";
+import { PerfisFicha } from "@/components/perfis/perfis-ficha";
+import { countPermissionsOn } from "@/components/perfis/labels";
+import { PageCanvas } from "@/components/ui/page-canvas";
 import { ALL_PERMISSIONS } from "@/doguinho/seed";
 import { loadWorkspace } from "@/doguinho/workspace";
+import { Pager } from "@/components/ui/pager";
+import { paginate } from "@/lib/pagination";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
-const LABELS: Record<(typeof ALL_PERMISSIONS)[number], string> = {
-  read_estoque: "Ver Estoque",
-  submit_fechamento: "Enviar Fechamento",
-  submit_correcao: "Enviar Correção",
-  read_history: "Ver histórico",
-  dashboard: "Dashboard",
-  manage_produto: "Gerir Produtos",
-  manage_users: "Criar e desligar usuários",
-};
-
 export default async function PerfisPage({
   searchParams,
 }: {
-  searchParams: Promise<{ loja?: string }>;
+  searchParams: Promise<{ loja?: string; page?: string; novo?: string; editar?: string }>;
 }) {
-  const { loja } = await searchParams;
+  const { loja, page, novo, editar } = await searchParams;
   const { actor, lojas, lojaId, snap, app } = await loadWorkspace(loja);
   if (!actor.isDono) redirect("/fechamento");
   const perfis = await app.listarPerfis(actor);
+  const listing = paginate(perfis, page);
+  const editando = editar ? (perfis.find((item) => item.id === editar) ?? null) : null;
+  const mostrarFicha = Boolean(editando) || novo === "1";
+  const novoHref = lojaId ? `/perfis?loja=${lojaId}&novo=1` : "/perfis?novo=1";
 
   return (
     <AppShell lojas={lojas} lojaId={lojaId} actor={actor} status={snap?.status ?? null}>
-      <div className="mx-auto max-w-3xl space-y-8">
-        <header>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-steam">Papéis</p>
-          <h1 className="mt-1 font-display text-3xl font-bold text-ink">Perfis</h1>
-          <p className="mt-2 max-w-xl text-sm text-steam">
-            Checklist de permissões. Lojas não entram aqui — o alcance de Loja é o Vínculo da pessoa.
-          </p>
+      <PageCanvas>
+        <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <h1 className="font-display text-3xl font-bold text-ink">Perfis</h1>
+            <p className="mt-2 max-w-xl text-sm text-steam">
+              Checklist de permissões. Lojas não entram aqui: o alcance de Loja é o Vínculo da pessoa.
+            </p>
+          </div>
+          <Link
+            href={novoHref}
+            className="inline-flex h-10 items-center justify-center gap-1.5 text-[15px] font-semibold text-ketchup hover:text-ketchup-hot"
+          >
+            <Plus className="h-4 w-4" />
+            Novo perfil
+          </Link>
         </header>
 
-        <form action={criarPerfilAction} className="space-y-3 rounded-md bg-sheet p-4">
-          <h2 className="font-display text-lg font-bold">Novo Perfil</h2>
-          <Label htmlFor="nome">Nome</Label>
-          <Input id="nome" name="nome" required />
-          <fieldset>
-            <legend className="text-sm font-medium">Permissões</legend>
-            <ul className="mt-2 space-y-2">
-              {ALL_PERMISSIONS.map((permission) => (
-                <li key={permission}>
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      name={`perm_${permission}`}
-                      className="h-5 w-5 rounded-[6px] border-border accent-[var(--ketchup)]"
-                    />
-                    {LABELS[permission]}
-                  </label>
-                </li>
-              ))}
-            </ul>
-          </fieldset>
-          <Button type="submit">Criar Perfil</Button>
-        </form>
+        {mostrarFicha ? <PerfisFicha perfil={editando} lojaId={lojaId} /> : null}
 
-        <ul className="space-y-3">
-          {perfis.map((perfil) => (
-            <li key={perfil.id} className="rounded-md bg-sheet p-4">
-              <form action={editarPerfilAction} className="space-y-3">
-                <input type="hidden" name="id" value={perfil.id} />
-                <div>
-                  <Label htmlFor={`nome-${perfil.id}`}>Nome</Label>
-                  <Input id={`nome-${perfil.id}`} name="nome" defaultValue={perfil.nome} required />
+        <div>
+          <div className="grid grid-cols-[minmax(10rem,1fr)_8rem_auto] bg-ketchup text-white">
+            <div className="listing-cell font-semibold">Perfil</div>
+            <div className="listing-cell font-semibold">Ligadas</div>
+            <div className="listing-cell text-right font-semibold">Ações</div>
+          </div>
+          {listing.items.map((perfil) => {
+            const href = lojaId
+              ? `/perfis?loja=${lojaId}&editar=${perfil.id}`
+              : `/perfis?editar=${perfil.id}`;
+            return (
+              <div
+                key={perfil.id}
+                className="grid grid-cols-[minmax(10rem,1fr)_8rem_auto] items-center border-b border-border bg-sheet last:border-0"
+              >
+                <div className="listing-cell font-semibold">
+                  {perfil.nome}
+                  {perfil.template ? (
+                    <span className="ml-2 rounded-full bg-mustard px-2 py-0.5 text-[11px] font-semibold text-ink">
+                      inicial
+                    </span>
+                  ) : null}
                 </div>
-                <ul className="space-y-2">
-                  {ALL_PERMISSIONS.map((permission) => (
-                    <li key={permission}>
-                      <label className="flex items-center gap-2 text-sm">
-                        <input
-                          type="checkbox"
-                          name={`perm_${permission}`}
-                          defaultChecked={perfil.permissions.includes(permission)}
-                          className="h-5 w-5 rounded-[6px] border-border accent-[var(--ketchup)]"
-                        />
-                        {LABELS[permission]}
-                      </label>
-                    </li>
-                  ))}
-                </ul>
-                <Button type="submit" variant="outline">
-                  Salvar
-                </Button>
-                {perfil.template ? (
-                  <p className="text-xs text-steam">Perfil inicial Operador. Não remover enquanto estiver em uso.</p>
-                ) : null}
-              </form>
-            </li>
-          ))}
-        </ul>
-      </div>
+                <div className="listing-cell tabular text-steam">
+                  {countPermissionsOn(perfil.permissions)} de {ALL_PERMISSIONS.length}
+                </div>
+                <div className="listing-cell text-right">
+                  <Link
+                    href={href}
+                    className="inline-flex h-8 items-center rounded-md border border-border bg-sheet px-3 text-sm font-semibold text-ink"
+                  >
+                    Editar
+                  </Link>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <Pager
+          pathname="/perfis"
+          page={listing.page}
+          totalPages={listing.totalPages}
+          params={{ loja: lojaId }}
+        />
+      </PageCanvas>
     </AppShell>
   );
 }

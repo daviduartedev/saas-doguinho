@@ -25,7 +25,7 @@ export default async function FechamentoPage({
           exigeJustificativa={snap.exigeJustificativa}
         />
       ) : (
-        <p className="text-sm text-steam">Esta conta autentica, mas não tem Vínculo com Loja. Peça ao Dono.</p>
+        <p className="text-[15px] text-steam">Esta conta autentica, mas não tem Vínculo com Loja. Peça ao Dono.</p>
       )}
     </AppShell>
   );

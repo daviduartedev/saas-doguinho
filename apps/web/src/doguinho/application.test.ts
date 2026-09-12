@@ -47,7 +47,7 @@ describe("Doguinho application", () => {
     const { app } = await createTestApp();
     const dono = await asDono(app);
     const lojas = await app.listarLojas(dono);
-    expect(lojas.map((loja) => loja.nome)).toEqual(["Centro", "Praia", "Estação"]);
+    expect(lojas.map((loja) => loja.nome)).toEqual(["Centro", "Jardim Juliana", "Magalhães"]);
 
     const quarta = await app.criarLoja(dono, { nome: "Shopping" });
     expect(quarta.nome).toBe("Shopping");
@@ -119,13 +119,13 @@ describe("Doguinho application", () => {
     expect(user.email).toBe("maria@doguinho.local");
   });
 
-  it("lets the Dono attach Maria to Centro and Praia and later change Vínculo and Perfil", async () => {
+  it("lets the Dono attach Maria to Centro and Jardim Juliana and later change Vínculo and Perfil", async () => {
     const { app } = await createTestApp();
     const dono = await asDono(app);
     const lojas = await app.listarLojas(dono);
     const centro = lojas.find((loja) => loja.nome === "Centro")!;
-    const praia = lojas.find((loja) => loja.nome === "Praia")!;
-    const estacao = lojas.find((loja) => loja.nome === "Estação")!;
+    const praia = lojas.find((loja) => loja.nome === "Jardim Juliana")!;
+    const estacao = lojas.find((loja) => loja.nome === "Magalhães")!;
     const perfil = (await app.listarPerfis(dono)).find((item) => item.nome === "Operador")!;
     await app.criarUsuario(dono, {
       email: "maria@doguinho.local",
@@ -162,7 +162,7 @@ describe("Doguinho application", () => {
     const dono = await asDono(app);
     const lojas = await app.listarLojas(dono);
     const centro = lojas.find((loja) => loja.nome === "Centro")!;
-    const praia = lojas.find((loja) => loja.nome === "Praia")!;
+    const praia = lojas.find((loja) => loja.nome === "Jardim Juliana")!;
     const perfil = (await app.listarPerfis(dono)).find((item) => item.nome === "Operador")!;
     await app.criarUsuario(dono, {
       email: "op@doguinho.local",
@@ -379,7 +379,7 @@ describe("Doguinho application", () => {
   it("shows nunca fechou rather than a fake 0 and empty catalog cannot Enviar", async () => {
     const { app } = await createTestApp();
     const dono = await asDono(app);
-    const estacao = (await app.listarLojas(dono)).find((loja) => loja.nome === "Estação")!;
+    const estacao = (await app.listarLojas(dono)).find((loja) => loja.nome === "Magalhães")!;
     const estoque = await app.estoqueDaLoja(dono, estacao.id);
     expect(estoque.status).toBe("nunca_fechou");
     expect(Object.values(estoque.valores).every((valor) => valor === null)).toBe(true);
@@ -396,7 +396,7 @@ describe("Doguinho application", () => {
     const { app } = await createTestApp();
     const dono = await asDono(app);
     const centro = (await app.listarLojas(dono)).find((loja) => loja.nome === "Centro")!;
-    const praia = (await app.listarLojas(dono)).find((loja) => loja.nome === "Praia")!;
+    const praia = (await app.listarLojas(dono)).find((loja) => loja.nome === "Jardim Juliana")!;
     await app.salvarRascunho(dono, {
       lojaId: centro.id,
       linhas: await linhasCompletas(app, dono, 1),

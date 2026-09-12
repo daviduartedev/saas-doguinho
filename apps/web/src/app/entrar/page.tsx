@@ -1,7 +1,7 @@
-import Image from "next/image";
 import { Mail } from "lucide-react";
 import { entrarAction } from "@/doguinho/actions";
-import { Button } from "@/components/ui/button";
+import { MarcaDoguinho } from "@/components/brand/marca-doguinho";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LoginBackdrop } from "@/components/login/login-backdrop";
@@ -21,15 +21,10 @@ export default async function EntrarPage({
 
       <section className="relative z-10 w-full max-w-[520px] rounded-[10px] bg-sheet px-10 pb-10 pt-8 md:max-w-[560px] md:px-12 md:pb-12 md:pt-10">
         <div className="flex flex-col items-center text-center">
-          <Image
-            src="/marca-doguinho.png"
-            alt="Doguinho do Corujá"
-            width={1958}
-            height={1112}
+          <MarcaDoguinho
             priority
-            quality={100}
             sizes="(min-width: 768px) 320px, 270px"
-            className="h-auto w-[270px] md:w-[320px]"
+            className="w-[270px] md:w-[320px]"
           />
           <h1 className="mt-6 font-display text-3xl font-bold text-ink">Entrar</h1>
           <p className="mt-1 text-base text-steam">Acesse seu sistema de estoque</p>
@@ -60,10 +55,10 @@ export default async function EntrarPage({
 
           <LoginPasswordField />
 
-          <Button type="submit" className="mt-2 h-12 w-full text-base">
+          <SubmitButton type="submit" className="mt-2 h-12 w-full text-base">
             Entrar
             <span aria-hidden>→</span>
-          </Button>
+          </SubmitButton>
         </form>
       </section>
     </main>

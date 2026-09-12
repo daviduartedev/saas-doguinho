@@ -15,7 +15,7 @@ export const SelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      "flex h-11 w-full items-center justify-between rounded-md border border-border bg-sheet px-3 text-sm font-medium text-ink data-[state=open]:border-ketchup data-[state=open]:text-ketchup data-[placeholder]:text-steam focus:outline-none focus:ring-2 focus:ring-ketchup",
+      "flex h-11 w-full items-center justify-between rounded-md border border-border bg-sheet px-3 text-[15px] font-medium text-ink data-[state=open]:border-ketchup data-[state=open]:text-ketchup data-[placeholder]:text-steam focus:outline-none focus:ring-2 focus:ring-ketchup",
       className,
     )}
     {...props}
@@ -31,17 +31,26 @@ SelectTrigger.displayName = "SelectTrigger";
 export const SelectContent = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
->(({ className, children, ...props }, ref) => (
+>(({ className, children, position = "popper", ...props }, ref) => (
   <SelectPrimitive.Portal>
     <SelectPrimitive.Content
       ref={ref}
+      position={position}
+      sideOffset={4}
+      collisionPadding={12}
       className={cn(
-        "z-50 min-w-[12rem] overflow-hidden rounded-md border border-border bg-sheet p-1",
+        "z-[80] min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-md border border-border bg-sheet p-1",
+        position === "popper" &&
+          "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
         className,
       )}
       {...props}
     >
-      <SelectPrimitive.Viewport>{children}</SelectPrimitive.Viewport>
+      <SelectPrimitive.Viewport
+        className={position === "popper" ? "min-w-[var(--radix-select-trigger-width)]" : undefined}
+      >
+        {children}
+      </SelectPrimitive.Viewport>
     </SelectPrimitive.Content>
   </SelectPrimitive.Portal>
 ));

@@ -1,4 +1,4 @@
-# Doguinho do Corujá – PRD
+# Doguinho do Corujá: PRD
 
 Derivado de `docs/research.md`. Requisitos marcados **(assumption)** são defaults de trabalho até refine. O restante é **CONFIRMED**.
 

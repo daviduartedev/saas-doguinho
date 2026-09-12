@@ -1,27 +1,30 @@
 import { AppShell } from "@/components/shell/app-shell";
+import { PageCanvas } from "@/components/ui/page-canvas";
+import { Pager } from "@/components/ui/pager";
 import { loadWorkspace } from "@/doguinho/workspace";
+import { paginate } from "@/lib/pagination";
 
 export const dynamic = "force-dynamic";
 
 export default async function HistoricoPage({
   searchParams,
 }: {
-  searchParams: Promise<{ loja?: string }>;
+  searchParams: Promise<{ loja?: string; page?: string }>;
 }) {
-  const { loja } = await searchParams;
+  const { loja, page } = await searchParams;
   const { actor, lojas, lojaId, snap, app, produtos } = await loadWorkspace(loja);
   const historico = lojaId ? await app.historico(actor, { lojaId }) : [];
+  const listing = paginate(historico, page);
   const lojaNome = lojas.find((item) => item.id === lojaId)?.nome ?? "";
   const nomeProduto = (id: string) => produtos.find((produto) => produto.id === id)?.nome ?? id;
 
   return (
     <AppShell lojas={lojas} lojaId={lojaId} actor={actor} status={snap?.status ?? null}>
-      <div className="mx-auto max-w-4xl">
+      <PageCanvas>
         <header className="mb-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-steam">Caderninho</p>
-          <h1 className="mt-1 font-display text-3xl font-bold text-ink">Histórico · {lojaNome}</h1>
+          <h1 className="font-display text-3xl font-bold text-ink">Histórico · {lojaNome}</h1>
           <p className="mt-2 max-w-xl text-sm text-steam">
-            Cada envio permanece. A diferença é o novo menos o anterior — não é um fato à parte.
+            Cada envio permanece. A diferença é o novo menos o anterior, não é um fato à parte.
           </p>
         </header>
 
@@ -29,9 +32,9 @@ export default async function HistoricoPage({
           <p className="text-sm text-steam">Nenhum Fechamento nesta Loja.</p>
         ) : (
           <ol className="space-y-4">
-            {historico.map((row) => (
-              <li key={row.submission.id} className="rounded-md bg-sheet p-4">
-                <div className="flex flex-wrap items-baseline justify-between gap-2">
+            {listing.items.map((row) => (
+              <li key={row.submission.id} className="overflow-hidden rounded-md bg-sheet">
+                <div className="listing-pad flex flex-wrap items-baseline justify-between gap-2">
                   <p className="font-semibold">
                     {row.submission.tipo === "correcao" ? "Correção" : "Fechamento"} · {row.usuarioNome}
                   </p>
@@ -42,15 +45,15 @@ export default async function HistoricoPage({
                   </p>
                 </div>
                 {row.submission.tipo === "correcao" && row.submission.justificativa ? (
-                  <p className="mt-2 text-sm text-ink">{row.submission.justificativa}</p>
+                  <p className="listing-pad pt-0 text-sm text-ink">{row.submission.justificativa}</p>
                 ) : null}
-                <table className="mt-3 w-full text-sm">
+                <table className="w-full text-sm">
                   <thead>
-                    <tr className="text-left text-steam">
-                      <th className="py-1 font-medium">Produto</th>
-                      <th className="py-1 text-right font-medium">Anterior</th>
-                      <th className="py-1 text-right font-medium">Nova</th>
-                      <th className="py-1 text-right font-medium">Δ</th>
+                    <tr className="bg-ketchup text-left text-white">
+                      <th className="listing-cell font-semibold">Produto</th>
+                      <th className="listing-cell text-right font-semibold">Anterior</th>
+                      <th className="listing-cell text-right font-semibold">Nova</th>
+                      <th className="listing-cell text-right font-semibold">Δ</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -59,11 +62,11 @@ export default async function HistoricoPage({
                         linha.anterior === null ? null : linha.nova - linha.anterior;
                       return (
                         <tr key={linha.produtoId} className="border-t border-border">
-                          <td className="py-1.5">{nomeProduto(linha.produtoId)}</td>
-                          <td className="tabular py-1.5 text-right">{linha.anterior ?? "—"}</td>
-                          <td className="tabular py-1.5 text-right font-semibold">{linha.nova}</td>
-                          <td className="tabular py-1.5 text-right text-steam">
-                            {delta === null ? "—" : delta}
+                          <td className="listing-cell">{nomeProduto(linha.produtoId)}</td>
+                          <td className="listing-cell tabular text-right">{linha.anterior ?? ""}</td>
+                          <td className="listing-cell tabular text-right font-semibold">{linha.nova}</td>
+                          <td className="listing-cell tabular text-right text-steam">
+                            {delta === null ? "" : delta}
                           </td>
                         </tr>
                       );
@@ -74,7 +77,13 @@ export default async function HistoricoPage({
             ))}
           </ol>
         )}
-      </div>
+        <Pager
+          pathname="/historico"
+          page={listing.page}
+          totalPages={listing.totalPages}
+          params={{ loja: lojaId }}
+        />
+      </PageCanvas>
     </AppShell>
   );
 }
