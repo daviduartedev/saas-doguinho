@@ -1,4 +1,4 @@
-# Doguinho do Corujá
+# Doguinho do Coruja
 
 Controle de estoque das lojas, com um Fechamento diário da quantidade restante de cada Produto.
 
@@ -33,7 +33,7 @@ Conjunto nomeado de permissões que o Dono cria com checklist. Não substitui o 
 _Avoid_: tenant role, papel que escolhe Loja no checkbox, equipe do dono como papel de sistema
 
 **Organização**:
-O negócio que é dono das Lojas e do cadastro de Produtos. Doguinho do Corujá é uma Organização. Loja nova entra na mesma Organização.
+O negócio que é dono das Lojas e do cadastro de Produtos. Doguinho do Coruja é uma Organização. Loja nova entra na mesma Organização.
 _Avoid_: tenant na interface, conta por Loja, tenant por Loja
 
 **Unidade de medida**:

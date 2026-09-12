@@ -274,7 +274,7 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
       if (await deps.store.getOrganization(organizationId)) return;
       await deps.store.insertOrganization({
         id: organizationId,
-        nome: "Doguinho do Corujá",
+        nome: "Doguinho do Coruja",
       });
       for (const nome of SEED_LOJAS) {
         await deps.store.insertLoja({

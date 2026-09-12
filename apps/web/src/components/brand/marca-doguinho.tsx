@@ -13,7 +13,7 @@ export function MarcaDoguinho({
   return (
     <Image
       src="/marca-doguinho.png"
-      alt="Doguinho do Corujá"
+      alt="Doguinho do Coruja"
       width={1024}
       height={576}
       priority={priority}

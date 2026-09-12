@@ -17,7 +17,7 @@ export default function AppGroupError({
 }) {
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col items-start justify-center gap-4 bg-paper px-6">
-      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-steam">Doguinho do Corujá</p>
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-steam">Doguinho do Coruja</p>
       <h1 className="font-display text-3xl font-bold text-ink">Não deu para concluir</h1>
       <p role="alert" className="rounded-md border border-border bg-sheet px-3 py-2 text-sm text-ketchup">
         {error.message || "Erro inesperado."}

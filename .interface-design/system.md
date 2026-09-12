@@ -1,4 +1,4 @@
-# Interface system: Doguinho do Corujá
+# Interface system: Doguinho do Coruja
 
 Direction: a night-shift conferência on warm paper, under a ketchup awning. The Dono reads remaining counts across Lojas. The Operador types quantities on a phone at encerramento.
 
@@ -53,7 +53,7 @@ Red Hat Display (wordmark, titles) + Red Hat Text (UI). Ratio ~1.25 from 15px bo
 
 ## Components
 
-- Brand lockup: owl + boxes + laptop + checklist, wordmark Doguinho do Corujá. Same PNG on login card and sidebar header, on the surface behind it (no fake login screenshot).
+- Brand lockup: owl + boxes + laptop + checklist, wordmark Doguinho do Coruja. Same PNG on login card and sidebar header, on the surface behind it (no fake login screenshot).
 - Button: Mantine, ketchup filled. Default 44px h. Form CTAs (`Guardar rascunho`, `Enviar fechamento`) use size sm and sit right-aligned, not full-width. Spinner + disabled while the request is in flight.
 - Input: darker `--control` inset · 10px radius · ketchup focus ring
 - Select open/checked: ketchup fill or ketchup text, never a gray pill

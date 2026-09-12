@@ -1,4 +1,4 @@
-# Spec — QA robusto pré-QA-manual (Doguinho do Corujá)
+# Spec — QA robusto pré-QA-manual (Doguinho do Coruja)
 
 ## Problem Statement
 
