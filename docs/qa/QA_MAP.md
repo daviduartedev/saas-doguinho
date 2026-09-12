@@ -6,7 +6,7 @@ Validado em navegador real — não só no código. Estado do ambiente: memory s
 
 ## Shell (todas as páginas autenticadas)
 
-- Sidebar: logo "Doguinho do Corujá" (→ `/fechamento`), nav com 8 links (todos com `?loja=todas`), botão **Sair**.
+- Sidebar: logo "Doguinho do Coruja" (→ `/fechamento`), nav com 8 links (todos com `?loja=todas`), botão **Sair**.
 - Header: combobox de Loja ("Todas as Lojas" + cada Loja) e identidade do actor ("Dono · Dono").
 - `alert` region presente (feedback de ações).
 

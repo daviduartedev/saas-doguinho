@@ -1,4 +1,4 @@
-# Security audits: Doguinho do Corujá
+# Security audits: Doguinho do Coruja
 
 Auditoria de produto na fase de pesquisa. Base: [OWASP Secure Agent Playbook](https://github.com/owasp/secure-agent-playbook) skill `security-guidance` (OWASP ASVS). Baseline: **ASVS Level 1**.
 

@@ -57,7 +57,6 @@ export default async function EntrarPage({
 
           <SubmitButton type="submit" className="mt-2 h-12 w-full text-base">
             Entrar
-            <span aria-hidden>→</span>
           </SubmitButton>
         </form>
       </section>

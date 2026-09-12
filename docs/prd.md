@@ -1,4 +1,4 @@
-# Doguinho do Corujá: PRD
+# Doguinho do Coruja: PRD
 
 Derivado de `docs/research.md`. Requisitos marcados **(assumption)** são defaults de trabalho até refine. O restante é **CONFIRMED**.
 
@@ -8,7 +8,7 @@ Um sistema web simples para o Dono ver o Estoque das Lojas e para o Operador inf
 
 ## 2. Objective
 
-Centralizar Estoque das Lojas da Organização Doguinho do Corujá, com histórico auditável, autorização por Loja, sem virar ERP.
+Centralizar Estoque das Lojas da Organização Doguinho do Coruja, com histórico auditável, autorização por Loja, sem virar ERP.
 
 ## 3. Users
 

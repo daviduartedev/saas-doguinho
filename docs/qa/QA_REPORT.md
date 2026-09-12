@@ -1,4 +1,4 @@
-# QA Report — Doguinho do Corujá
+# QA Report — Doguinho do Coruja
 
 **Rodada:** `audit/security-qa` (2026-09-12) · **Base:** spec #14, tickets #15–#29
 **Ambiente:** dev server local (`next dev`, porta 3000), **memory store + seed** (`DATABASE_URL` ausente — ambiente destrutível/resetável por restart), Node 22, Chromium via Playwright, Windows 11.

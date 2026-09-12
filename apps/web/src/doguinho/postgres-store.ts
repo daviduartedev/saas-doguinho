@@ -1,6 +1,7 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import postgres from "postgres";
 import { ConflictError } from "./errors";
+import { SEED_ORGANIZATION_ID } from "./seed";
 import type { Loja, Perfil, Produto, Submission } from "./types";
 import type { StoredEstoque, StoredRascunho, StoredUser, Store } from "./store";
 import { normalizeEmail, normalizeName } from "./store";
@@ -253,6 +254,7 @@ async function migrate(sql: Sql) {
     )`;
   // QA-008: e-mail único por Organização enforced pelo banco (backstop da corrida).
   await sql`CREATE UNIQUE INDEX IF NOT EXISTS users_org_email_key ON users (organization_id, email)`;
+  await sql`UPDATE organizations SET nome = ${"Doguinho do Coruja"} WHERE id = ${SEED_ORGANIZATION_ID} AND nome <> ${"Doguinho do Coruja"}`;
   await sql`CREATE TABLE IF NOT EXISTS vinculos (
       user_id TEXT NOT NULL REFERENCES users(id),
       loja_id TEXT NOT NULL REFERENCES lojas(id),

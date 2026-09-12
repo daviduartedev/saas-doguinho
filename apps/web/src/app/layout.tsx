@@ -18,7 +18,7 @@ const text = Red_Hat_Text({
 });
 
 export const metadata: Metadata = {
-  title: "Doguinho do Corujá",
+  title: "Doguinho do Coruja",
   description: "Fechamento diário da quantidade restante",
 };
 

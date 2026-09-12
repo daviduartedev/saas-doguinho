@@ -1,7 +1,7 @@
 - complementary:
-  - link "Doguinho do Corujá":
+  - link "Doguinho do Coruja":
     - /url: /fechamento
-    - img "Doguinho do Corujá"
+    - img "Doguinho do Coruja"
   - navigation:
     - link "Dashboard":
       - /url: /dashboard?loja=todas

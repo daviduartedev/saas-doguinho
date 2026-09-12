@@ -1,6 +1,6 @@
 # apps/web
 
-Next.js + TypeScript app for Doguinho do Corujá.
+Next.js + TypeScript app for Doguinho do Coruja.
 
 ## Dev
 

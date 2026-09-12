@@ -1,4 +1,4 @@
-# Doguinho do Corujá: Product Research
+# Doguinho do Coruja: Product Research
 
 Pesquisa congelada em 2026-09-10. Refinamentos posteriores podem alterar premissas marcadas como **ASSUMPTION** ou **UNKNOWN**. Itens **CONFIRMED** foram respondidos no grill.
 
@@ -6,7 +6,7 @@ Legenda: **CONFIRMED** · **ASSUMPTION** · **UNKNOWN**
 
 ## 1. Product Summary
 
-Doguinho do Corujá é um sistema web de controle de Estoque para uma **Organização** com várias **Lojas** (inicialmente 3; podem abrir mais). Operadores informam a **quantidade restante** de cada **Produto ativo** no **encerramento** do dia. O **Dono** vê todas as Lojas, o catálogo, o histórico e um dashboard central. Acesso pelo navegador, priorizando celular.
+Doguinho do Coruja é um sistema web de controle de Estoque para uma **Organização** com várias **Lojas** (inicialmente 3; podem abrir mais). Operadores informam a **quantidade restante** de cada **Produto ativo** no **encerramento** do dia. O **Dono** vê todas as Lojas, o catálogo, o histórico e um dashboard central. Acesso pelo navegador, priorizando celular.
 
 Não é PDV, não é ERP, não mede venda nem dinheiro.
 
@@ -34,7 +34,7 @@ Fora deste produto (salvo confirmação futura): venda, PDV, pedido, cliente, fo
 
 | Ator | Status | Definição |
 |------|--------|-----------|
-| Organização | CONFIRMED | Doguinho do Corujá. Dona das Lojas e do catálogo. |
+| Organização | CONFIRMED | Doguinho do Coruja. Dona das Lojas e do catálogo. |
 | Dono | CONFIRMED | Papel de sistema. Todas as Lojas. Não rebaixável pelo checklist. Não remove o próprio acesso se for o último Dono. |
 | Operador | CONFIRMED | Usuário com Vínculo a uma ou mais Lojas. |
 | Perfil | CONFIRMED | Conjunto nomeado de permissões criado pelo Dono via checklist. Não substitui o Dono. |
