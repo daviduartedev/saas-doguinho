@@ -6,6 +6,12 @@ export const SEED_DONO_PASSWORD = "coruja";
 export const OPERADOR_PERFIL_NOME = "Operador";
 
 export const SEED_LOJAS = ["Centro", "Jardim Juliana", "Magalhães"] as const;
+
+export const SEED_OPERADORES = [
+  { email: "operador.centro@doguinho.local", nome: "Operador Centro", lojaNome: "Centro" },
+  { email: "operador.juliana@doguinho.local", nome: "Operador Jardim Juliana", lojaNome: "Jardim Juliana" },
+  { email: "operador.magalhaes@doguinho.local", nome: "Operador Magalhães", lojaNome: "Magalhães" },
+] as const;
 export const MAX_LOJAS = SEED_LOJAS.length;
 
 export const SEED_PRODUTOS: Array<{ nome: string; unidade: UnidadeMedida }> = [

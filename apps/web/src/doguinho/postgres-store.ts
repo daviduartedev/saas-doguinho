@@ -123,7 +123,7 @@ export async function createPostgresStore(url: string): Promise<Store> {
       const atual = rows[0] ? mapUser(rows[0]) : null;
       if (!atual) return;
       const next = { ...atual, ...patch };
-      await db()`UPDATE users SET disabled = ${next.disabled}, perfil_id = ${next.perfilId}, is_dono = ${next.isDono}, nome = ${next.nome} WHERE id = ${id}`;
+      await db()`UPDATE users SET disabled = ${next.disabled}, perfil_id = ${next.perfilId}, is_dono = ${next.isDono}, nome = ${next.nome}, password_hash = ${next.passwordHash} WHERE id = ${id}`;
     },
     async getUserById(id) {
       const rows = await db()`SELECT id, organization_id, email, nome, is_dono, disabled, perfil_id, password_hash FROM users WHERE id = ${id}`;

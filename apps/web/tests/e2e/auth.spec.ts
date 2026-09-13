@@ -1,6 +1,14 @@
 // Autenticação: login, credencial errada, logout, middleware.
 import { expect, test } from "@playwright/test";
-import { DONO, login, loginDono, logout } from "./helpers";
+import {
+  DONO,
+  OPERADOR_CENTRO,
+  OPERADOR_JULIANA,
+  OPERADOR_MAGALHAES,
+  login,
+  loginDono,
+  logout,
+} from "./helpers";
 
 test.describe("Autenticação", () => {
   test("login com credenciais válidas leva ao Fechamento", async ({ page }) => {
@@ -35,5 +43,22 @@ test.describe("Autenticação", () => {
     await loginDono(page);
     await page.goto("/entrar");
     await page.waitForURL("**/fechamento**");
+  });
+
+  test("/entrar é só e-mail e senha — sem seletor de Loja", async ({ page }) => {
+    await page.goto("/entrar");
+    await expect(page.getByLabel("E-mail", { exact: true })).toBeVisible();
+    await expect(page.getByLabel("Senha", { exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Entrar" })).toBeVisible();
+    await expect(page.getByRole("combobox")).toHaveCount(0);
+    await expect(page.getByRole("option", { name: "Centro" })).toHaveCount(0);
+  });
+
+  test("cada Operador de seed entra com a senha do Dono", async ({ page }) => {
+    for (const identidade of [OPERADOR_CENTRO, OPERADOR_JULIANA, OPERADOR_MAGALHAES]) {
+      await login(page, identidade.email, identidade.senha);
+      await expect(page).toHaveURL(/\/fechamento/);
+      await logout(page);
+    }
   });
 });

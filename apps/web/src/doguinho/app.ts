@@ -14,6 +14,7 @@ import {
   SEED_DONO_EMAIL,
   SEED_DONO_PASSWORD,
   SEED_LOJAS,
+  SEED_OPERADORES,
   SEED_ORGANIZATION_ID,
   SEED_PRODUTOS,
 } from "./seed";
@@ -320,6 +321,47 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
     return grouped;
   }
 
+  async function ensureSeedOperadores() {
+    const lojas = await deps.store.listLojas(organizationId);
+    const perfil = await deps.store.findPerfilByName(organizationId, OPERADOR_PERFIL_NOME);
+    if (!perfil) return;
+    let passwordHash: string | null = null;
+    for (const spec of SEED_OPERADORES) {
+      const loja = lojas.find((item) => item.nome === spec.lojaNome);
+      if (!loja) continue;
+      const existing = await deps.store.getUserByEmail(organizationId, spec.email);
+      if (!passwordHash) passwordHash = await deps.passwords.hash(SEED_DONO_PASSWORD);
+      if (existing) {
+        // ASVS 8.2 / 8.4: Vínculo is the Loja allowlist — seed keeps exactly one Loja.
+        await deps.store.setVinculos(existing.id, [loja.id]);
+        // ASVS 6.2: seed owns these test passwords; store the same hash as the Dono seed.
+        await deps.store.updateUser(existing.id, { passwordHash });
+        continue;
+      }
+      const user: StoredUser = {
+        id: deps.ids.id(),
+        organizationId,
+        email: spec.email,
+        nome: spec.nome,
+        isDono: false,
+        disabled: false,
+        perfilId: perfil.id,
+        passwordHash,
+      };
+      try {
+        await deps.store.insertUser(user);
+        await deps.store.setVinculos(user.id, [loja.id]);
+      } catch (error) {
+        if (!(error instanceof ConflictError)) throw error;
+        const reused = await deps.store.getUserByEmail(organizationId, spec.email);
+        if (reused) {
+          await deps.store.setVinculos(reused.id, [loja.id]);
+          await deps.store.updateUser(reused.id, { passwordHash });
+        }
+      }
+    }
+  }
+
   function sameLinhas(a: QuantidadeLinha[], b: Submission["linhas"]) {
     const left = [...a]
       .filter((linha) => linha.restante !== null)
@@ -335,44 +377,46 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
 
   return {
     async seed() {
-      if (await deps.store.getOrganization(organizationId)) return;
-      await deps.store.insertOrganization({
-        id: organizationId,
-        nome: "Doguinho do Coruja",
-      });
-      for (const nome of SEED_LOJAS) {
-        await deps.store.insertLoja({
+      if (!(await deps.store.getOrganization(organizationId))) {
+        await deps.store.insertOrganization({
+          id: organizationId,
+          nome: "Doguinho do Coruja",
+        });
+        for (const nome of SEED_LOJAS) {
+          await deps.store.insertLoja({
+            id: deps.ids.id(),
+            organizationId,
+            nome,
+          });
+        }
+        for (const produto of SEED_PRODUTOS) {
+          await deps.store.insertProduto({
+            id: deps.ids.id(),
+            organizationId,
+            nome: produto.nome,
+            unidade: produto.unidade,
+            ativo: true,
+          });
+        }
+        await deps.store.insertPerfil({
           id: deps.ids.id(),
           organizationId,
-          nome,
+          nome: OPERADOR_PERFIL_NOME,
+          permissions: [...OPERADOR_TEMPLATE_PERMISSIONS],
+          template: true,
         });
-      }
-      for (const produto of SEED_PRODUTOS) {
-        await deps.store.insertProduto({
+        await deps.store.insertUser({
           id: deps.ids.id(),
           organizationId,
-          nome: produto.nome,
-          unidade: produto.unidade,
-          ativo: true,
+          email: SEED_DONO_EMAIL,
+          nome: "Dono",
+          isDono: true,
+          disabled: false,
+          perfilId: null,
+          passwordHash: await deps.passwords.hash(SEED_DONO_PASSWORD),
         });
       }
-      await deps.store.insertPerfil({
-        id: deps.ids.id(),
-        organizationId,
-        nome: OPERADOR_PERFIL_NOME,
-        permissions: [...OPERADOR_TEMPLATE_PERMISSIONS],
-        template: true,
-      });
-      await deps.store.insertUser({
-        id: deps.ids.id(),
-        organizationId,
-        email: SEED_DONO_EMAIL,
-        nome: "Dono",
-        isDono: true,
-        disabled: false,
-        perfilId: null,
-        passwordHash: await deps.passwords.hash(SEED_DONO_PASSWORD),
-      });
+      await ensureSeedOperadores();
     },
 
     async entrar(input) {

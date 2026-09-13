@@ -2,7 +2,9 @@
 import { expect, type Page } from "@playwright/test";
 
 export const DONO = { email: "dono@doguinho.local", senha: "coruja" };
-export const OPERADOR_CENTRO = { email: "operador.centro@doguinho.local", senha: "qa123456" };
+export const OPERADOR_CENTRO = { email: "operador.centro@doguinho.local", senha: "coruja" };
+export const OPERADOR_JULIANA = { email: "operador.juliana@doguinho.local", senha: "coruja" };
+export const OPERADOR_MAGALHAES = { email: "operador.magalhaes@doguinho.local", senha: "coruja" };
 export const RESTRITO = { email: "restrito@doguinho.local", senha: "qa123456" };
 
 export async function login(page: Page, email: string, senha: string) {

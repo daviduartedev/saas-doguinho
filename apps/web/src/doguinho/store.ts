@@ -60,7 +60,7 @@ export type Store = {
   insertUser: (row: StoredUser) => Promise<void>;
   updateUser: (
     id: string,
-    patch: Partial<Pick<StoredUser, "disabled" | "perfilId" | "isDono" | "nome">>,
+    patch: Partial<Pick<StoredUser, "disabled" | "perfilId" | "isDono" | "nome" | "passwordHash">>,
   ) => Promise<void>;
   getUserById: (id: string) => Promise<StoredUser | null>;
   getUserByEmail: (organizationId: string, email: string) => Promise<StoredUser | null>;
