@@ -29,7 +29,12 @@ export async function loginOperador(
 }
 
 export async function logout(page: Page) {
-  await page.getByRole("button", { name: "Sair" }).click();
+  const sair = page.getByRole("button", { name: "Sair" }).locator("visible=true");
+  if ((await sair.count()) === 0) {
+    await page.getByRole("button", { name: "Abrir menu" }).click();
+    await expect(sair).toBeVisible();
+  }
+  await sair.click();
   await page.waitForURL("**/entrar**");
 }
 
