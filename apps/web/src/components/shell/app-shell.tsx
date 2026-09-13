@@ -55,30 +55,30 @@ export function AppShell({
           <Suspense fallback={<nav className="flex flex-1 flex-col gap-1 px-3" aria-label="Seções" />}>
             <SideNav actor={actor} lojas={lojas} />
           </Suspense>
-          <form action={sairAction} className="p-3">
-            <SubmitButton variant="awning" className="w-full justify-start gap-3 px-3 text-white hover:bg-ketchup-hot">
-              <LogOut className="h-4 w-4" />
-              Sair
-            </SubmitButton>
-          </form>
+          <footer className="app-nav-side-foot">
+            <p className="app-actor">
+              {actor.isDono ? "Dono" : "Operador"} · {actor.nome}
+            </p>
+            <form action={sairAction}>
+              <SubmitButton variant="awning" className="w-full justify-start gap-3 px-3 text-white hover:bg-ketchup-hot">
+                <LogOut className="h-4 w-4" />
+                Sair
+              </SubmitButton>
+            </form>
+          </footer>
         </aside>
 
         <div className="app-column">
-          <header className="page-gutter relative z-20 flex items-center justify-between gap-3 overflow-visible border-b border-border bg-sheet py-3">
-            <div className="flex min-w-0 items-center gap-3">
-              <Store className="h-4 w-4 shrink-0 text-ketchup" />
-              {lojas.length > 0 ? (
-                <Suspense fallback={<span className="h-10 min-w-[8rem]" />}>
-                  <LojaFiltro lojas={lojas} />
-                </Suspense>
-              ) : (
-                <span className="text-[15px] text-steam">Sem Loja no Vínculo</span>
-              )}
-              <span id="shell-status" className="flex items-center" />
-            </div>
-            <p className="app-actor text-[15px] text-steam">
-              {actor.isDono ? "Dono" : "Operador"} · {actor.nome}
-            </p>
+          <header className="page-gutter relative z-20 flex items-center gap-3 overflow-visible border-b border-border bg-sheet py-3">
+            <Store className="h-4 w-4 shrink-0 text-ketchup" />
+            {lojas.length > 0 ? (
+              <Suspense fallback={<span className="h-10 min-w-[8rem]" />}>
+                <LojaFiltro lojas={lojas} />
+              </Suspense>
+            ) : (
+              <span className="text-[15px] text-steam">Sem Loja no Vínculo</span>
+            )}
+            <span id="shell-status" className="flex items-center" />
           </header>
 
           <main className="page-gutter flex-1 py-6">{children}</main>
