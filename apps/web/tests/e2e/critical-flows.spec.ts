@@ -1,20 +1,16 @@
 // Fluxos críticos de negócio: Fechamento → Estoque → Histórico, Correção com
-// Justificativa, e Rascunho persistente. Cada teste cria sua própria Loja
-// (Fechamento é 1×/dia/Loja) — a suíte é idempotente entre re-runs.
+// Justificativa, e Rascunho persistente. A Organização tem as 3 Lojas de seed;
+// a suíte reutiliza Centro / Jardim Juliana / Magalhães (Fechamento é 1×/dia/Loja).
 import { expect, test } from "@playwright/test";
-import { criarLoja, loginDono, preencherQuantidades, selecionarLoja } from "./helpers";
+import { enviarRestante, loginDono, preencherQuantidades, selecionarLoja } from "./helpers";
 
 test.describe("Fluxos críticos", () => {
   test("Fechamento completo vira Estoque e entra no Histórico", async ({ page }) => {
     await loginDono(page);
-    const nome = `E2E Fechamento ${Date.now()}`;
-    await criarLoja(page, nome);
-    const lojaId = await selecionarLoja(page, nome);
+    const lojaId = await selecionarLoja(page, "Centro");
 
     await page.goto(`/fechamento?loja=${lojaId}`);
-    await preencherQuantidades(page, "5");
-    await page.getByRole("button", { name: "Enviar fechamento" }).click();
-    await expect(page.locator("body")).toContainText("Enviado. Isso é o Estoque agora.");
+    await enviarRestante(page, "5");
 
     await page.goto(`/estoque?loja=${lojaId}`);
     await expect(page.locator("body")).toContainText("5");
@@ -25,20 +21,19 @@ test.describe("Fluxos críticos", () => {
 
   test("Correção no mesmo dia exige Justificativa e registra no Histórico", async ({ page }) => {
     await loginDono(page);
-    const nome = `E2E Correcao ${Date.now()}`;
-    await criarLoja(page, nome);
-    const lojaId = await selecionarLoja(page, nome);
+    const lojaId = await selecionarLoja(page, "Jardim Juliana");
 
     await page.goto(`/fechamento?loja=${lojaId}`);
-    await preencherQuantidades(page, "5");
-    await page.getByRole("button", { name: "Enviar fechamento" }).click();
-    await expect(page.locator("body")).toContainText("Enviado. Isso é o Estoque agora.");
+    const correcao = page.getByRole("button", { name: "Enviar correção" });
+    if (!(await correcao.count())) {
+      await preencherQuantidades(page, "5");
+      await page.getByRole("button", { name: "Enviar fechamento" }).click();
+      await expect(page.locator("body")).toContainText("Enviado. Isso é o Estoque agora.");
+      await page.goto(`/fechamento?loja=${lojaId}`);
+    }
 
-    // segunda submissão no dia = Correção
-    await page.goto(`/fechamento?loja=${lojaId}`);
     await preencherQuantidades(page, "7");
     await page.getByRole("button", { name: "Enviar correção" }).click();
-    // sem Justificativa → rejeitado
     await expect(page.locator("body")).toContainText("Correção exige Justificativa");
 
     await page.getByLabel(/Justificativa/i).fill("Contagem refeita após conferência física.");
@@ -46,14 +41,12 @@ test.describe("Fluxos críticos", () => {
     await expect(page.locator("body")).toContainText("Enviado. Isso é o Estoque agora.");
 
     await page.goto(`/historico?loja=${lojaId}`);
-    await expect(page.locator("ol li")).toHaveCount(2);
+    await expect(page.locator("ol li").nth(1)).toBeVisible();
   });
 
   test("Rascunho guardado sobrevive a reload", async ({ page }) => {
     await loginDono(page);
-    const nome = `E2E Rascunho ${Date.now()}`;
-    await criarLoja(page, nome);
-    const lojaId = await selecionarLoja(page, nome);
+    const lojaId = await selecionarLoja(page, "Magalhães");
 
     await page.goto(`/fechamento?loja=${lojaId}`);
     const primeiro = page.locator('input[aria-label^="Quantidade restante de"]').first();

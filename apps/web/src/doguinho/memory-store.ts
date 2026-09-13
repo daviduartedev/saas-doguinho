@@ -156,6 +156,11 @@ export function createMemoryStore(): Store {
     async getRascunho(lojaId, calendarDay) {
       return rascunhos.get(rascunhoKey(lojaId, calendarDay)) ?? null;
     },
+    async listRascunhosOnDay(organizationId, calendarDay) {
+      return [...rascunhos.values()].filter(
+        (row) => row.organizationId === organizationId && row.calendarDay === calendarDay,
+      );
+    },
     async deleteRascunho(lojaId, calendarDay) {
       rascunhos.delete(rascunhoKey(lojaId, calendarDay));
     },
@@ -166,8 +171,16 @@ export function createMemoryStore(): Store {
     async listSubmissions(lojaId) {
       return submissions.filter((row) => row.lojaId === lojaId);
     },
+    async listSubmissionsByOrg(organizationId) {
+      return submissions.filter((row) => row.organizationId === organizationId);
+    },
     async submissionsOnDay(lojaId, calendarDay) {
       return submissions.filter((row) => row.lojaId === lojaId && row.calendarDay === calendarDay);
+    },
+    async listSubmissionsOnDayByOrg(organizationId, calendarDay) {
+      return submissions.filter(
+        (row) => row.organizationId === organizationId && row.calendarDay === calendarDay,
+      );
     },
     async produtoHasHistory(produtoId) {
       return submissions.some((row) => row.linhas.some((linha) => linha.produtoId === produtoId));
@@ -178,6 +191,9 @@ export function createMemoryStore(): Store {
     },
     async listEstoque(lojaId) {
       return [...estoque.values()].filter((row) => row.lojaId === lojaId);
+    },
+    async listEstoqueByOrg(organizationId) {
+      return [...estoque.values()].filter((row) => row.organizationId === organizationId);
     },
     async getEstoque(lojaId, produtoId) {
       return estoque.get(estoqueKey(lojaId, produtoId)) ?? null;

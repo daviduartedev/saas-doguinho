@@ -22,14 +22,14 @@ export default async function EstoquePage({
 }) {
   const { loja, page, per, q, novo } = await searchParams;
   const workspace = await loadWorkspace(loja, { produtos: true, lojaState: false });
-  const { actor, lojas, filtro, produtos, app } = workspace;
+  const { actor, filtro, produtos, app } = workspace;
   const query = parseListingQuery(q);
   const ativos = produtos.filter(
     (produto) =>
       produto.ativo &&
       (!query || produto.nome.toLocaleLowerCase("pt-BR").includes(query.toLocaleLowerCase("pt-BR"))),
   );
-  const visao: EstoqueView[] = await Promise.all(lojas.map((item) => app.estoqueDaLoja(actor, item.id)));
+  const visao: EstoqueView[] = await app.estoqueDasLojas(actor);
   const listing = paginate(ativos, page, per);
   const podeGerir = actorCan(actor, "manage_produto");
   const mostrarNovo = novo === "1" && podeGerir;

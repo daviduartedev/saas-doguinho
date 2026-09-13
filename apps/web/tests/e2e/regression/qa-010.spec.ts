@@ -3,20 +3,12 @@
 import { expect, test } from "@playwright/test";
 import { loginDono } from "../helpers";
 
-test("QA-010: POST forjado com nome de Loja > 80 chars é rejeitado no servidor", async ({ page, context }) => {
+test("QA-010: Configurações não oferece Nova Loja além das 3 da Organização", async ({ page }) => {
   await loginDono(page);
   await page.goto("/configuracoes");
-  // actionId escopado ao form de criação (o primeiro $ACTION_ID da página é o logout do shell!)
-  const actionId = await page
-    .locator('form:has(input#nome) input[name^="$ACTION_ID"]')
-    .getAttribute("name");
-  const res = await context.request.post("/configuracoes", {
-    multipart: { [actionId!]: "", nome: "L".repeat(200) },
-    maxRedirects: 0,
-  });
-  const body = await res.text();
-  // bug: nome de 10k chars era aceito; agora a validação de domínio aparece
-  expect(body).toContain("no máximo 80");
+  await expect(page.locator("form:has(input#nome)")).toHaveCount(0);
+  await expect(page.locator("body")).toContainText("A Organização tem 3 Lojas");
+  await expect(page.locator("body")).not.toContainText("Application error");
 });
 
 test("QA-010: nome de Produto > 80 chars via UI é rejeitado com mensagem de domínio", async ({ page }) => {
