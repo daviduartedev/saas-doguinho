@@ -10,6 +10,7 @@ const DONO = { email: "dono@doguinho.local", senha: "coruja" };
 const IDENTIDADES = [
   { email: "operador.multi@doguinho.local", senha: "qa123456", nome: "Operador Multi", perfil: "Operador", lojas: ["Centro", "Jardim Juliana"] },
   { email: "restrito@doguinho.local", senha: "qa123456", nome: "Restrito QA", perfil: "Restrito", lojas: ["Centro"] },
+  { email: "semloja@doguinho.local", senha: "qa123456", nome: "Sem Loja", perfil: "Operador", lojas: [] },
 ];
 
 async function loginDono(page: Page) {

@@ -21,14 +21,9 @@ test.describe("Fronteira de Loja (?loja= allowlist)", () => {
     await expect(page.locator("body")).not.toContainText("Application error");
   });
 
-  test("Restrito (Vínculo só Centro) não consegue fixar outra Loja via ?loja=", async ({ page }) => {
+  test("Restrito (Vínculo só Centro) não vê o filtro de Loja", async ({ page }) => {
     await login(page, RESTRITO.email, RESTRITO.senha);
-    // descobre um id de Loja fora do Vínculo olhando as opções? Restrito só vê Centro.
-    // Força um id válido de outra Loja via lista pública do seletor do Dono é overkill;
-    // o allowlist já foi provado acima com id inválido. Aqui: o seletor do Restrito
-    // NÃO lista outras Lojas.
-    await page.getByRole("combobox").click();
-    await expect(page.getByRole("option", { name: "Centro" })).toBeVisible();
+    await expect(page.getByRole("combobox")).toHaveCount(0);
     await expect(page.getByRole("option", { name: "Magalhães" })).toHaveCount(0);
     await expect(page.getByRole("option", { name: "Jardim Juliana" })).toHaveCount(0);
   });
@@ -36,25 +31,16 @@ test.describe("Fronteira de Loja (?loja= allowlist)", () => {
   test("Dono continua vendo as três Lojas", async ({ page }) => {
     await loginDono(page);
     await page.getByRole("combobox").click();
+    await expect(page.getByRole("option", { name: "Todas as Lojas" })).toBeVisible();
     await expect(page.getByRole("option", { name: "Centro" })).toBeVisible();
     await expect(page.getByRole("option", { name: "Jardim Juliana" })).toBeVisible();
     await expect(page.getByRole("option", { name: "Magalhães" })).toBeVisible();
   });
 
-  test("cada Operador de seed só vê a Loja do Vínculo", async ({ page }) => {
-    const casos = [
-      { identidade: OPERADOR_CENTRO, loja: "Centro", outras: ["Jardim Juliana", "Magalhães"] },
-      { identidade: OPERADOR_JULIANA, loja: "Jardim Juliana", outras: ["Centro", "Magalhães"] },
-      { identidade: OPERADOR_MAGALHAES, loja: "Magalhães", outras: ["Centro", "Jardim Juliana"] },
-    ] as const;
-    for (const caso of casos) {
-      await login(page, caso.identidade.email, caso.identidade.senha);
-      await page.getByRole("combobox").click();
-      await expect(page.getByRole("option", { name: caso.loja })).toBeVisible();
-      for (const outra of caso.outras) {
-        await expect(page.getByRole("option", { name: outra })).toHaveCount(0);
-      }
-      await page.keyboard.press("Escape");
+  test("cada Operador de seed com uma Loja não vê o filtro", async ({ page }) => {
+    for (const identidade of [OPERADOR_CENTRO, OPERADOR_JULIANA, OPERADOR_MAGALHAES]) {
+      await login(page, identidade.email, identidade.senha);
+      await expect(page.getByRole("combobox")).toHaveCount(0);
       await page.getByRole("button", { name: "Sair" }).click();
       await page.waitForURL("**/entrar**");
     }

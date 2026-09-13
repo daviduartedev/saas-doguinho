@@ -71,13 +71,13 @@ export function AppShell({
         <div className="app-column">
           <header className="page-gutter relative z-20 flex items-center gap-3 overflow-visible border-b border-border bg-sheet py-3">
             <Store className="h-4 w-4 shrink-0 text-ketchup" />
-            {lojas.length > 0 ? (
+            {lojas.length === 0 ? (
+              <span className="text-[15px] text-steam">Sem Loja no Vínculo</span>
+            ) : lojas.length > 1 ? (
               <Suspense fallback={<span className="h-10 min-w-[8rem]" />}>
                 <LojaFiltro lojas={lojas} />
               </Suspense>
-            ) : (
-              <span className="text-[15px] text-steam">Sem Loja no Vínculo</span>
-            )}
+            ) : null}
             <span id="shell-status" className="flex items-center" />
           </header>
 

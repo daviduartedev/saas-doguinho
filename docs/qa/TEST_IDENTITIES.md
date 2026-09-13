@@ -29,6 +29,7 @@ O MVP tem **uma única Organização** (`org-doguinho`, ADR-0002: `organization_
 | `operador.magalhaes@doguinho.local` | Doguinho do Coruja | Magalhães | Perfil "Operador" | idem, em 1 Loja | seed |
 | `operador.multi@doguinho.local` | Doguinho do Coruja | Centro, Jardim Juliana | Perfil "Operador" | idem, em 2 Lojas | criar via UI no QA |
 | `restrito@doguinho.local` | Doguinho do Coruja | Centro | Perfil custom "Restrito" (só `read_estoque`) | read_estoque | criar via UI no QA |
+| `semloja@doguinho.local` | Doguinho do Coruja | nenhuma | Perfil "Operador" | idem, sem Loja | criar via UI no QA |
 | `dono2@doguinho.local` | Doguinho do Coruja | todas | Dono (promovido p/ testar rebaixar/último Dono) | todas | criar via UI no QA |
 
 **Credenciais**: a senha do Dono e dos três Operadores de seed é `coruja` (constante `SEED_DONO_PASSWORD` em `src/doguinho/seed.ts` — credencial de teste local, não é secret real). Usuários criados no QA recebem senhas de teste descartáveis (mín. 8 caracteres, exigência do domínio). Nenhuma credencial real ou de produção é usada/registrada.
