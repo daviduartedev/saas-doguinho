@@ -1,4 +1,5 @@
 import type { HistoryRow, Produto, QuantidadeLinha } from "@/doguinho/types";
+import { FechamentoExportAcoes } from "@/components/fechamento/fechamento-export-acoes";
 import { EnviosLista } from "@/components/historico/envios-lista";
 import { ListingPager } from "@/components/ui/pager";
 import { paginate } from "@/lib/pagination";
@@ -35,15 +36,18 @@ export function FechamentoRelatorio({
   return (
     <section className="w-full">
       <header className="mb-5">
-        <Titulo
-          className={
-            tituloTag === "h1"
-              ? "font-display text-3xl font-bold text-ink text-balance"
-              : "font-display text-2xl font-bold text-ink text-balance"
-          }
-        >
-          Fechamento · {lojaNome}
-        </Titulo>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <Titulo
+            className={
+              tituloTag === "h1"
+                ? "font-display text-3xl font-bold text-ink text-balance"
+                : "font-display text-2xl font-bold text-ink text-balance"
+            }
+          >
+            Fechamento · {lojaNome}
+          </Titulo>
+          {intro ? <FechamentoExportAcoes loja={lojaFiltro ?? lojaId} /> : null}
+        </div>
         {intro ? (
           <p className="mt-2 max-w-2xl text-[15px] text-steam">
             Quantidade restante do último envio de hoje nesta Loja. Rascunho não entra.

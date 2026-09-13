@@ -1,3 +1,4 @@
+import { FechamentoExportAcoes } from "@/components/fechamento/fechamento-export-acoes";
 import { FechamentoForm } from "@/components/fechamento/fechamento-form";
 import { FechamentoRelatorio } from "@/components/fechamento/fechamento-relatorio";
 import { ShellStatus } from "@/components/shell/shell-status";
@@ -56,11 +57,14 @@ export default async function FechamentoPage({
       <ShellStatus status={statusChip} filtro={filtro} />
       {todas ? (
         <div className="w-full space-y-12">
-          <header>
-            <h1 className="font-display text-3xl font-bold text-ink text-balance">Fechamento</h1>
-            <p className="mt-2 max-w-2xl text-[15px] text-steam">
-              Quantidade restante do último envio de hoje em cada Loja. Rascunho não entra.
-            </p>
+          <header className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h1 className="font-display text-3xl font-bold text-ink text-balance">Fechamento</h1>
+              <p className="mt-2 max-w-2xl text-[15px] text-steam">
+                Quantidade restante do último envio de hoje em cada Loja. Rascunho não entra.
+              </p>
+            </div>
+            <FechamentoExportAcoes loja={FILTRO_TODAS} />
           </header>
           {secoes.map((secao) => (
             <FechamentoRelatorio
