@@ -106,6 +106,7 @@ export type DoguinhoApp = {
   ) => Promise<void>;
   enviar: (actor: Actor, input: EnviarInput) => Promise<Submission>;
   historico: (actor: Actor, input: { lojaId: string }) => Promise<HistoryRow[]>;
+  enviosDoDia: (actor: Actor, input: { lojaId: string }) => Promise<HistoryRow[]>;
   dashboard: (actor: Actor) => Promise<Dashboard>;
 };
 
@@ -904,6 +905,30 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
       await requireLoja(actor, input.lojaId);
       requirePermission(actor, "read_history");
       return historyRows(input.lojaId);
+    },
+
+    async enviosDoDia(actor, input) {
+      // ASVS 4.1.1 / 4.2.1: same Loja scope and read_history as historico.
+      await requireLoja(actor, input.lojaId);
+      requirePermission(actor, "read_history");
+      const day = calendarDay(deps.clock);
+      const [submissions, users, produtos] = await Promise.all([
+        deps.store.submissionsOnDay(input.lojaId, day),
+        deps.store.listUsers(organizationId),
+        deps.store.listProdutos(organizationId),
+      ]);
+      const nomes = new Map(users.map((user) => [user.id, user.nome]));
+      const produtoNomes = produtoNomesFrom(produtos);
+      return [...submissions]
+        .sort((a, b) => {
+          if (a.enviadoEm === b.enviadoEm) return 0;
+          return a.enviadoEm < b.enviadoEm ? -1 : 1;
+        })
+        .map((submission) => ({
+          submission,
+          usuarioNome: nomes.get(submission.usuarioId) ?? "Usuário",
+          produtoNomes,
+        }));
     },
 
     async dashboard(actor) {

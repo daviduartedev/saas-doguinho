@@ -20,7 +20,10 @@ test.describe("Fluxos críticos", () => {
     await expect(page.locator("body")).toContainText("5");
 
     await page.goto("/historico");
-    await expect(page.locator("ol li").first()).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Histórico/ })).toBeVisible();
+    await expect(page.getByText(/Fechamento ·|Correção ·/).first()).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "Diferença" }).first()).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "Δ" })).toHaveCount(0);
   });
 
   test("Correção no mesmo dia exige Justificativa e registra no Histórico", async ({ page }) => {
@@ -40,7 +43,11 @@ test.describe("Fluxos críticos", () => {
     await expect(page.locator("body")).toContainText("Enviado. Isso é o Estoque agora.");
 
     await page.goto("/historico");
-    await expect(page.locator("ol li").nth(1)).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Histórico/ })).toBeVisible();
+    await expect(page.getByText(/Correção ·/).first()).toBeVisible();
+    await expect(page.getByText("Contagem refeita após conferência física.").first()).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "Diferença" }).first()).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "Δ" })).toHaveCount(0);
   });
 
   test("Rascunho guardado sobrevive a reload", async ({ page }) => {

@@ -1,3 +1,4 @@
+import { EnviosLista } from "@/components/historico/envios-lista";
 import { PageCanvas } from "@/components/ui/page-canvas";
 import { Pager } from "@/components/ui/pager";
 import { loadWorkspace } from "@/doguinho/workspace";
@@ -31,57 +32,7 @@ export default async function HistoricoPage({
       {historico.length === 0 ? (
         <p className="text-sm text-steam">Nenhum Fechamento nesta Loja.</p>
       ) : (
-        <ol className="space-y-4">
-          {listing.items.map((row) => (
-            <li key={row.submission.id} className="listing-frame bg-sheet">
-              <div className="listing-pad flex flex-wrap items-baseline justify-between gap-2">
-                <p className="font-semibold">
-                  {row.submission.tipo === "correcao" ? "Correção" : "Fechamento"} · {row.usuarioNome}
-                </p>
-                <p className="text-xs text-steam">
-                  {new Date(row.submission.enviadoEm).toLocaleString("pt-BR", {
-                    timeZone: "America/Sao_Paulo",
-                  })}
-                </p>
-              </div>
-              {row.submission.tipo === "correcao" && row.submission.justificativa ? (
-                <p className="listing-pad pt-0 text-sm text-ink">{row.submission.justificativa}</p>
-              ) : null}
-              <table className="listing-stack w-full text-sm">
-                <thead>
-                  <tr className="bg-ketchup text-left text-white">
-                    <th className="listing-cell font-semibold">Produto</th>
-                    <th className="listing-cell text-right font-semibold">Anterior</th>
-                    <th className="listing-cell text-right font-semibold">Nova</th>
-                    <th className="listing-cell text-right font-semibold">Δ</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {row.submission.linhas.map((linha) => {
-                    const delta =
-                      linha.anterior === null ? null : linha.nova - linha.anterior;
-                    return (
-                      <tr key={linha.produtoId} className="border-t border-border">
-                        <td className="listing-cell" data-label="Produto">
-                          {nomeProduto(linha.produtoId, row.produtoNomes)}
-                        </td>
-                        <td className="listing-cell tabular text-right" data-label="Anterior">
-                          {linha.anterior ?? ""}
-                        </td>
-                        <td className="listing-cell tabular text-right font-semibold" data-label="Nova">
-                          {linha.nova}
-                        </td>
-                        <td className="listing-cell tabular text-right text-steam" data-label="Δ">
-                          {delta === null ? "" : delta}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </li>
-          ))}
-        </ol>
+        <EnviosLista rows={listing.items} labelProduto={nomeProduto} />
       )}
       <Pager
         pathname="/historico"

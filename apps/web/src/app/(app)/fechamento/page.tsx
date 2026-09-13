@@ -18,9 +18,11 @@ export default async function FechamentoPage({
 }) {
   const { loja, page, per } = await searchParams;
   const workspace = await loadWorkspace(loja);
-  const { actor, lojas, lojaId, filtro, snap, produtos, linhas } = workspace;
+  const { actor, lojas, lojaId, filtro, snap, produtos, linhas, app } = workspace;
   const lojaNome = lojas.find((item) => item.id === lojaId)?.nome ?? "Loja";
   const formulario = fechamentoEhFormulario(actor);
+  const envios =
+    lojaId && !formulario ? await app.enviosDoDia(actor, { lojaId }) : [];
   // QA-003: quem não pode enviar vê o quadro somente-leitura, sem ações nem auto-save
   const podeEnviar =
     formulario &&
@@ -51,6 +53,7 @@ export default async function FechamentoPage({
             lojaNome={lojaNome}
             produtos={produtos}
             linhas={linhasOficiaisDoDia(snap, produtos)}
+            envios={envios}
             page={page}
             per={per}
           />

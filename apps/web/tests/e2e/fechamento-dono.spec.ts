@@ -32,6 +32,26 @@ test.describe("Fechamento do Dono", () => {
     await expect(page.locator('[aria-label^="Quantidade restante de"]').first()).toHaveText("13");
   });
 
+  test("Dono vê a linha do tempo do dia após Fechamento e Correção", async ({ page }) => {
+    await login(page, OPERADOR_CENTRO.email, OPERADOR_CENTRO.senha);
+    await enviarRestante(page, "11");
+    await page.reload();
+    await enviarRestante(page, "8");
+    await page.goto("/sair");
+
+    await loginDono(page);
+    await page.goto("/fechamento");
+
+    await expect(page.getByRole("heading", { name: "Envios de hoje" })).toBeVisible();
+    await expect(page.getByText("Fechamento · Operador Centro").first()).toBeVisible();
+    await expect(page.getByText("Correção · Operador Centro").first()).toBeVisible();
+    await expect(page.getByText("Contagem refeita após conferência física.").first()).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "Anterior" }).first()).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "Nova" }).first()).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "Diferença" }).first()).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "Δ" })).toHaveCount(0);
+  });
+
   test("Dono continua gerindo Produtos, Usuários e Perfis", async ({ page }) => {
     await loginDono(page);
     await page.goto("/produtos");

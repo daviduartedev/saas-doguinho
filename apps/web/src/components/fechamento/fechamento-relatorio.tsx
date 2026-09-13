@@ -1,4 +1,5 @@
-import type { Produto, QuantidadeLinha } from "@/doguinho/types";
+import type { HistoryRow, Produto, QuantidadeLinha } from "@/doguinho/types";
+import { EnviosLista } from "@/components/historico/envios-lista";
 import { ListingPager } from "@/components/ui/pager";
 import { paginate } from "@/lib/pagination";
 
@@ -7,6 +8,7 @@ export function FechamentoRelatorio({
   lojaNome,
   produtos,
   linhas,
+  envios,
   page,
   per,
 }: {
@@ -14,6 +16,7 @@ export function FechamentoRelatorio({
   lojaNome: string;
   produtos: Produto[];
   linhas: QuantidadeLinha[];
+  envios: HistoryRow[];
   page?: string;
   per?: string;
 }) {
@@ -84,6 +87,20 @@ export function FechamentoRelatorio({
           />
         </>
       )}
+
+      <section className="mt-10">
+        <h2 className="font-display text-xl font-bold text-ink">Envios de hoje</h2>
+        <p className="mt-2 max-w-2xl text-[15px] text-steam">
+          Quem enviou nesta Loja hoje. O Histórico guarda todos os dias.
+        </p>
+        {envios.length === 0 ? (
+          <p className="mt-4 text-sm text-steam">Nenhum envio hoje nesta Loja.</p>
+        ) : (
+          <div className="mt-4">
+            <EnviosLista rows={envios} />
+          </div>
+        )}
+      </section>
     </div>
   );
 }
