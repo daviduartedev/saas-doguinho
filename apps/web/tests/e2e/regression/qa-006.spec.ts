@@ -4,11 +4,10 @@ import { expect, test } from "@playwright/test";
 
 test("QA-006: submit com sessão expirada mostra mensagem (não 'Application error')", async ({ page, context }) => {
   await page.goto("/entrar");
-  await page.getByLabel("E-mail", { exact: true }).fill("dono@doguinho.local");
+  await page.getByLabel("E-mail", { exact: true }).fill("operador.centro@doguinho.local");
   await page.getByLabel("Senha", { exact: true }).fill("coruja");
   await page.getByRole("button", { name: "Entrar" }).click();
-  await page.waitForURL("**/dashboard**");
-  await page.goto("/fechamento");
+  await page.waitForURL("**/fechamento**");
 
   await page.locator('input[aria-label^="Quantidade restante de"]').first().fill("3");
   await context.clearCookies(); // simula expiração da sessão no meio do preenchimento
