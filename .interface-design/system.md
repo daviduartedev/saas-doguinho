@@ -63,7 +63,7 @@ Loading: skeleton bones for page content only. The awning nav stays mounted in t
 - Status chip: solid ketchup/mustard/counter, not translucent
 - Loading: skeleton bones for page content only. Nav chrome is the live awning, never skeleton.
 - Listing table: ketchup thead, mustard status chip under a Loja only for rascunho/enviado/correção, sheet rows, blank empty cells. Toolbar: search + Adicionar produto. Footer: “Mostrando X a Y de Z” + page size + Mantine Pagination (active page is a ketchup disc).
-- Dashboard: four KPI cards + shadcn/recharts area chart. Header Loja filter only (Todas as Lojas or one Loja). Nova Loja lives in Configurações, not on the Dashboard.
+- Dashboard: four KPI cards + shadcn/recharts area chart. Header Loja filter only (Todas as Lojas or one Loja). Configurações lists the three Lojas. Nova Loja appears there only while the Organização is under that cap, never on the Dashboard.
 
 ## Auth screen
 

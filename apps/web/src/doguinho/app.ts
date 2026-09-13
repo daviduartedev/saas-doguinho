@@ -9,6 +9,7 @@ import {
 import { isUnidadeMedida, requireQuantidade } from "./quantities";
 import {
   ALL_PERMISSIONS,
+  MAX_LOJAS,
   OPERADOR_PERFIL_NOME,
   SEED_DONO_EMAIL,
   SEED_DONO_PASSWORD,
@@ -18,7 +19,7 @@ import {
 } from "./seed";
 import { OPERADOR_TEMPLATE_PERMISSIONS } from "./types";
 import { normalizeEmail, normalizeName } from "./store";
-import type { Store, StoredUser } from "./store";
+import type { Store, StoredEstoque, StoredRascunho, StoredUser } from "./store";
 import type {
   Actor,
   Clock,
@@ -91,6 +92,7 @@ export type DoguinhoApp = {
   alterarPerfilUsuario: (actor: Actor, input: { userId: string; perfilId: string }) => Promise<void>;
   rebaixarDono: (actor: Actor, input: { userId: string }) => Promise<void>;
   estoqueDaLoja: (actor: Actor, lojaId: string) => Promise<EstoqueView>;
+  estoqueDasLojas: (actor: Actor) => Promise<EstoqueView[]>;
   rascunhoDoDia: (actor: Actor, lojaId: string) => Promise<QuantidadeLinha[]>;
   salvarRascunho: (
     actor: Actor,
@@ -107,9 +109,7 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
   const dummyHashPromise = deps.passwords.hash("__dummy__");
 
   async function actorFromUser(user: StoredUser): Promise<Actor> {
-    const vinculoLojaIds = user.isDono
-      ? (await deps.store.listLojas(user.organizationId)).map((loja) => loja.id)
-      : await deps.store.vinculosOf(user.id);
+    const vinculoLojaIds = user.isDono ? [] : await deps.store.vinculosOf(user.id);
     let permissions: Permission[] = [];
     if (user.isDono) permissions = ALL_PERMISSIONS;
     else if (user.perfilId) {
@@ -203,29 +203,22 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
     };
   }
 
-  async function statusDaLoja(lojaId: string): Promise<{
-    status: FechamentoStatus;
-    valores: Record<string, number | null>;
-    rascunho: QuantidadeLinha[] | null;
-    hoje: Submission[];
-    exigeJustificativa: boolean;
-  }> {
-    const day = calendarDay(deps.clock);
-    const [todosProdutos, estoqueRows, rascunhoRow, hoje] = await Promise.all([
-      deps.store.listProdutos(organizationId),
-      deps.store.listEstoque(lojaId),
-      deps.store.getRascunho(lojaId, day),
-      deps.store.submissionsOnDay(lojaId, day),
-    ]);
-    const produtos = todosProdutos.filter((produto) => produto.ativo);
+  function snapFrom(
+    estoqueRows: StoredEstoque[],
+    rascunhoRow: StoredRascunho | null | undefined,
+    hoje: Submission[],
+    produtos: Produto[],
+  ) {
+    const ativos = produtos.filter((produto) => produto.ativo);
     const valores: Record<string, number | null> = {};
-    for (const produto of produtos) {
+    for (const produto of ativos) {
       valores[produto.id] =
         estoqueRows.find((row) => row.produtoId === produto.id)?.quantidade ?? null;
     }
     let status: FechamentoStatus = "nunca_fechou";
     if (hoje.length > 0) status = "enviado";
-    else if (rascunhoRow && rascunhoRow.linhas.some((linha) => linha.restante !== null)) status = "rascunho";
+    else if (rascunhoRow && rascunhoRow.linhas.some((linha) => linha.restante !== null))
+      status = "rascunho";
     else if (Object.values(valores).some((valor) => valor !== null)) status = "enviado";
     return {
       status,
@@ -234,6 +227,49 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
       hoje,
       exigeJustificativa: hoje.length > 0,
     };
+  }
+
+  async function statusDaLoja(lojaId: string) {
+    const day = calendarDay(deps.clock);
+    const [todosProdutos, estoqueRows, rascunhoRow, hoje] = await Promise.all([
+      deps.store.listProdutos(organizationId),
+      deps.store.listEstoque(lojaId),
+      deps.store.getRascunho(lojaId, day),
+      deps.store.submissionsOnDay(lojaId, day),
+    ]);
+    return snapFrom(estoqueRows, rascunhoRow, hoje, todosProdutos);
+  }
+
+  async function statusDasLojas(lojas: Loja[]) {
+    const day = calendarDay(deps.clock);
+    const [todosProdutos, estoqueRows, rascunhos, hoje] = await Promise.all([
+      deps.store.listProdutos(organizationId),
+      deps.store.listEstoqueByOrg(organizationId),
+      deps.store.listRascunhosOnDay(organizationId, day),
+      deps.store.listSubmissionsOnDayByOrg(organizationId, day),
+    ]);
+    const estoqueByLoja = new Map<string, StoredEstoque[]>();
+    for (const row of estoqueRows) {
+      const list = estoqueByLoja.get(row.lojaId) ?? [];
+      list.push(row);
+      estoqueByLoja.set(row.lojaId, list);
+    }
+    const rascunhoByLoja = new Map(rascunhos.map((row) => [row.lojaId, row]));
+    const hojeByLoja = new Map<string, Submission[]>();
+    for (const row of hoje) {
+      const list = hojeByLoja.get(row.lojaId) ?? [];
+      list.push(row);
+      hojeByLoja.set(row.lojaId, list);
+    }
+    return lojas.map((loja) => ({
+      loja,
+      snap: snapFrom(
+        estoqueByLoja.get(loja.id) ?? [],
+        rascunhoByLoja.get(loja.id),
+        hojeByLoja.get(loja.id) ?? [],
+        todosProdutos,
+      ),
+    }));
   }
 
   async function linhasDoDia(lojaId: string): Promise<QuantidadeLinha[]> {
@@ -251,15 +287,37 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
   }
 
   async function historyRows(lojaId: string): Promise<HistoryRow[]> {
-    const submissions = [...(await deps.store.listSubmissions(lojaId))].sort((a, b) =>
-      a.enviadoEm < b.enviadoEm ? 1 : -1,
-    );
-    return Promise.all(
-      submissions.map(async (submission) => {
-        const user = await deps.store.getUserById(submission.usuarioId);
-        return { submission, usuarioNome: user?.nome ?? "Usuário" };
-      }),
-    );
+    const [submissions, users] = await Promise.all([
+      deps.store.listSubmissions(lojaId),
+      deps.store.listUsers(organizationId),
+    ]);
+    const nomes = new Map(users.map((user) => [user.id, user.nome]));
+    return [...submissions]
+      .sort((a, b) => (a.enviadoEm < b.enviadoEm ? 1 : -1))
+      .map((submission) => ({
+        submission,
+        usuarioNome: nomes.get(submission.usuarioId) ?? "Usuário",
+      }));
+  }
+
+  async function historyByLoja(lojas: Loja[]): Promise<Map<string, HistoryRow[]>> {
+    const [submissions, users] = await Promise.all([
+      deps.store.listSubmissionsByOrg(organizationId),
+      deps.store.listUsers(organizationId),
+    ]);
+    const nomes = new Map(users.map((user) => [user.id, user.nome]));
+    const visiveis = new Set(lojas.map((loja) => loja.id));
+    const grouped = new Map<string, HistoryRow[]>();
+    for (const loja of lojas) grouped.set(loja.id, []);
+    const ordered = [...submissions].sort((a, b) => (a.enviadoEm < b.enviadoEm ? 1 : -1));
+    for (const submission of ordered) {
+      if (!visiveis.has(submission.lojaId)) continue;
+      grouped.get(submission.lojaId)!.push({
+        submission,
+        usuarioNome: nomes.get(submission.usuarioId) ?? "Usuário",
+      });
+    }
+    return grouped;
   }
 
   function sameLinhas(a: QuantidadeLinha[], b: Submission["linhas"]) {
@@ -366,6 +424,10 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
       if (!nome) throw new ValidationError("Informe o nome da Loja.");
       // QA-010: maxLength do client é contornável — o servidor enforce o teto.
       if (nome.length > 80) throw new ValidationError("Nome da Loja deve ter no máximo 80 caracteres.");
+      const existentes = await deps.store.listLojas(organizationId);
+      if (existentes.length >= MAX_LOJAS) {
+        throw new ValidationError(`A Organização tem ${MAX_LOJAS} Lojas. Não é possível criar outra.`);
+      }
       const loja = { id: deps.ids.id(), organizationId, nome };
       await deps.store.insertLoja(loja);
       return loja;
@@ -596,6 +658,21 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
       return { loja, status: snap.status, valores: snap.valores, exigeJustificativa: snap.exigeJustificativa };
     },
 
+    async estoqueDasLojas(actor) {
+      requirePermission(actor, "read_estoque");
+      const lojas = await deps.store.listLojas(organizationId);
+      const visiveis = actor.isDono
+        ? lojas
+        : lojas.filter((loja) => actor.vinculoLojaIds.includes(loja.id));
+      const colunas = await statusDasLojas(visiveis);
+      return colunas.map(({ loja, snap }) => ({
+        loja,
+        status: snap.status,
+        valores: snap.valores,
+        exigeJustificativa: snap.exigeJustificativa,
+      }));
+    },
+
     async rascunhoDoDia(actor, lojaId) {
       await requireLoja(actor, lojaId);
       return linhasDoDia(lojaId);
@@ -703,17 +780,16 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
       const visiveis = actor.isDono
         ? lojas
         : lojas.filter((loja) => actor.vinculoLojaIds.includes(loja.id));
-      const colunas = await Promise.all(
-        visiveis.map(async (loja) => {
-          const [snap, historico] = await Promise.all([statusDaLoja(loja.id), historyRows(loja.id)]);
-          return { loja, snap, historico };
-        }),
-      );
+      const [colunas, historicoPorLoja] = await Promise.all([
+        statusDasLojas(visiveis),
+        historyByLoja(visiveis),
+      ]);
       const estoque: EstoqueView[] = [];
       const semFechamentoHoje: Loja[] = [];
       const recentes: HistoryRow[] = [];
       const historicos: { loja: Loja; rows: HistoryRow[] }[] = [];
       for (const coluna of colunas) {
+        const historico = historicoPorLoja.get(coluna.loja.id) ?? [];
         estoque.push({
           loja: coluna.loja,
           status: coluna.snap.status,
@@ -721,8 +797,8 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
           exigeJustificativa: coluna.snap.exigeJustificativa,
         });
         if (coluna.snap.hoje.length === 0) semFechamentoHoje.push(coluna.loja);
-        recentes.push(...coluna.historico);
-        historicos.push({ loja: coluna.loja, rows: coluna.historico });
+        recentes.push(...historico);
+        historicos.push({ loja: coluna.loja, rows: historico });
       }
       recentes.sort((a, b) => (a.submission.enviadoEm < b.submission.enviadoEm ? 1 : -1));
       return { semFechamentoHoje, estoque, recentes: recentes.slice(0, 20), historicos };

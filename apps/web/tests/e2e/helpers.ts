@@ -22,15 +22,7 @@ export async function logout(page: Page) {
   await page.waitForURL("**/entrar**");
 }
 
-/** Cria uma Loja pela UI (Dono) e confirma que ela aparece na lista. */
-export async function criarLoja(page: Page, nome: string) {
-  await page.goto("/configuracoes");
-  await page.locator("input#nome").fill(nome);
-  await page.getByRole("button", { name: "Criar Loja" }).click();
-  await expect(page.locator("ul.listing-frame")).toContainText(nome);
-}
-
-/** Troca a Loja ativa pelo seletor do shell e devolve o id (?loja=). */
+/** Seleciona uma Loja de seed pelo nome e devolve o id (?loja=). */
 export async function selecionarLoja(page: Page, nome: string): Promise<string> {
   const antes = page.url(); // a URL atual pode já ter ?loja= — esperar MUDANÇA, não o padrão
   await page.getByRole("combobox").click();
@@ -59,4 +51,20 @@ export async function preencherQuantidades(page: Page, valor: string) {
     if (!(await proxima.count())) break;
     await proxima.click();
   }
+}
+
+/** Envia o quadro: Fechamento do dia ou Correção, conforme o botão visível. */
+export async function enviarRestante(page: Page, valor: string) {
+  await preencherQuantidades(page, valor);
+  const correcao = page.getByRole("button", { name: "Enviar correção" });
+  if (await correcao.count()) {
+    const just = page.getByLabel(/Justificativa/i);
+    if (await just.count()) {
+      await just.fill("Contagem refeita após conferência física.");
+    }
+    await correcao.click();
+  } else {
+    await page.getByRole("button", { name: "Enviar fechamento" }).click();
+  }
+  await expect(page.locator("body")).toContainText("Enviado. Isso é o Estoque agora.");
 }

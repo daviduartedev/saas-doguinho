@@ -81,7 +81,12 @@ export type Store = {
 
   upsertEstoque: (row: StoredEstoque) => Promise<void>;
   listEstoque: (lojaId: string) => Promise<StoredEstoque[]>;
+  listEstoqueByOrg: (organizationId: string) => Promise<StoredEstoque[]>;
   getEstoque: (lojaId: string, produtoId: string) => Promise<StoredEstoque | null>;
+
+  listRascunhosOnDay: (organizationId: string, calendarDay: string) => Promise<StoredRascunho[]>;
+  listSubmissionsByOrg: (organizationId: string) => Promise<Submission[]>;
+  listSubmissionsOnDayByOrg: (organizationId: string, calendarDay: string) => Promise<Submission[]>;
 
   insertSession: (row: StoredSession) => Promise<void>;
   getSession: (token: string) => Promise<StoredSession | null>;

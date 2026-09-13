@@ -1,7 +1,7 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import postgres from "postgres";
 import { ConflictError } from "./errors";
-import { SEED_ORGANIZATION_ID } from "./seed";
+import { SEED_LOJAS, SEED_ORGANIZATION_ID } from "./seed";
 import type { Loja, Perfil, Produto, Submission } from "./types";
 import type { StoredEstoque, StoredRascunho, StoredUser, Store } from "./store";
 import { normalizeEmail, normalizeName } from "./store";
@@ -161,6 +161,10 @@ export async function createPostgresStore(url: string): Promise<Store> {
       const rows = await db()`SELECT loja_id, organization_id, calendar_day, linhas FROM rascunhos WHERE loja_id = ${lojaId} AND calendar_day = ${calendarDay}`;
       return rows[0] ? mapRascunho(rows[0]) : null;
     },
+    async listRascunhosOnDay(organizationId, calendarDay) {
+      const rows = await db()`SELECT loja_id, organization_id, calendar_day, linhas FROM rascunhos WHERE organization_id = ${organizationId} AND calendar_day = ${calendarDay}`;
+      return rows.map(mapRascunho);
+    },
     async deleteRascunho(lojaId, calendarDay) {
       await db()`DELETE FROM rascunhos WHERE loja_id = ${lojaId} AND calendar_day = ${calendarDay}`;
     },
@@ -172,8 +176,16 @@ export async function createPostgresStore(url: string): Promise<Store> {
       const rows = await db()`SELECT * FROM submissions WHERE loja_id = ${lojaId} ORDER BY enviado_em`;
       return rows.map(mapSubmission);
     },
+    async listSubmissionsByOrg(organizationId) {
+      const rows = await db()`SELECT * FROM submissions WHERE organization_id = ${organizationId} ORDER BY enviado_em`;
+      return rows.map(mapSubmission);
+    },
     async submissionsOnDay(lojaId, calendarDay) {
       const rows = await db()`SELECT * FROM submissions WHERE loja_id = ${lojaId} AND calendar_day = ${calendarDay} ORDER BY enviado_em`;
+      return rows.map(mapSubmission);
+    },
+    async listSubmissionsOnDayByOrg(organizationId, calendarDay) {
+      const rows = await db()`SELECT * FROM submissions WHERE organization_id = ${organizationId} AND calendar_day = ${calendarDay} ORDER BY enviado_em`;
       return rows.map(mapSubmission);
     },
     async produtoHasHistory(produtoId) {
@@ -187,6 +199,10 @@ export async function createPostgresStore(url: string): Promise<Store> {
     },
     async listEstoque(lojaId) {
       const rows = await db()`SELECT loja_id, organization_id, produto_id, quantidade FROM estoque WHERE loja_id = ${lojaId}`;
+      return rows.map(mapEstoque);
+    },
+    async listEstoqueByOrg(organizationId) {
+      const rows = await db()`SELECT loja_id, organization_id, produto_id, quantidade FROM estoque WHERE organization_id = ${organizationId}`;
       return rows.map(mapEstoque);
     },
     async getEstoque(lojaId, produtoId) {
@@ -302,6 +318,24 @@ async function migrate(sql: Sql) {
       user_id TEXT NOT NULL REFERENCES users(id),
       created_at BIGINT NOT NULL
     )`;
+  await pruneToSeedLojas(sql);
+}
+
+/** ASVS 1.2: seed names stay a bound parameter. Extra Lojas (E2E/smoke) are dropped. */
+async function pruneToSeedLojas(sql: Sql) {
+  const keep = [...SEED_LOJAS];
+  const extras = await sql`
+    SELECT id FROM lojas
+    WHERE organization_id = ${SEED_ORGANIZATION_ID}
+      AND nome <> ALL(${keep})
+  `;
+  const ids = extras.map((row) => String(row.id));
+  if (ids.length === 0) return;
+  await sql`DELETE FROM vinculos WHERE loja_id IN ${sql(ids)}`;
+  await sql`DELETE FROM rascunhos WHERE loja_id IN ${sql(ids)}`;
+  await sql`DELETE FROM submissions WHERE loja_id IN ${sql(ids)}`;
+  await sql`DELETE FROM estoque WHERE loja_id IN ${sql(ids)}`;
+  await sql`DELETE FROM lojas WHERE id IN ${sql(ids)}`;
 }
 
 function mapLoja(row: Record<string, unknown>): Loja {

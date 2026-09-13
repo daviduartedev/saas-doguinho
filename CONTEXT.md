@@ -33,7 +33,7 @@ Conjunto nomeado de permissões que o Dono cria com checklist. Não substitui o 
 _Avoid_: tenant role, papel que escolhe Loja no checkbox, equipe do dono como papel de sistema
 
 **Organização**:
-O negócio que é dono das Lojas e do cadastro de Produtos. Doguinho do Coruja é uma Organização. Loja nova entra na mesma Organização.
+O negócio que é dono das Lojas e do cadastro de Produtos. Doguinho do Coruja é uma Organização.
 _Avoid_: tenant na interface, conta por Loja, tenant por Loja
 
 **Unidade de medida**:
@@ -61,5 +61,5 @@ Quantidade oficial de um Produto em uma Loja. É a quantidade restante do últim
 _Avoid_: saldo calculado por entradas e saídas, estoque teórico
 
 **Loja**:
-Unidade de negócio com Estoque próprio.
-_Avoid_: tenant, unidade (confunde com unidade de medida), filial (até o negócio usar essa palavra)
+Unidade de negócio com Estoque próprio. A Organização tem três: Centro, Jardim Juliana e Magalhães.
+_Avoid_: tenant, unidade (confunde com unidade de medida), filial (até o negócio usar essa palavra), loja extra além dessas três

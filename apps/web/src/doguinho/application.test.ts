@@ -43,16 +43,16 @@ describe("Doguinho application", () => {
     ).toBeInstanceOf(AuthFailedError);
   });
 
-  it("lets the Dono create a Loja, including a fourth, and keeps it Dono-only", async () => {
+  it("keeps the three seed Lojas and refuses a fourth", async () => {
     const { app } = await createTestApp();
     const dono = await asDono(app);
     const lojas = await app.listarLojas(dono);
     expect(lojas.map((loja) => loja.nome)).toEqual(["Centro", "Jardim Juliana", "Magalhães"]);
 
-    const quarta = await app.criarLoja(dono, { nome: "Shopping" });
-    expect(quarta.nome).toBe("Shopping");
+    await expect(app.criarLoja(dono, { nome: "Shopping" })).rejects.toBeInstanceOf(ValidationError);
+    await expect(app.criarLoja(dono, { nome: "Shopping" })).rejects.toThrow(/3 Lojas/);
     const depois = await app.listarLojas(dono);
-    expect(depois).toHaveLength(4);
+    expect(depois).toHaveLength(3);
   });
 
   it("registers Produto with a closed Unidade de medida and rejects duplicates and free text", async () => {

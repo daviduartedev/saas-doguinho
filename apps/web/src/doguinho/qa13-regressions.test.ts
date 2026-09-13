@@ -37,13 +37,13 @@ beforeEach(() => {
   deleteMock.mockClear();
 });
 
-describe("QA-009 — criarLojaAction não pode engolir o redirect de sucesso", () => {
-  it("criar Loja com sucesso propaga NEXT_REDIRECT (não vira 'Não foi possível salvar.')", async () => {
+describe("QA-009 — criarLojaAction não pode engolir o erro de domínio", () => {
+  it("quarta Loja propaga ValidationError (não vira 'Não foi possível salvar.')", async () => {
     await loginDono();
     const fd = new FormData();
     fd.set("nome", `Loja QA009 ${Date.now()}`);
-    // bug: redirect() dentro do try → catch engole → fail() → "Não foi possível salvar."
-    await expect(criarLojaAction(fd)).rejects.toThrow(/NEXT_REDIRECT/);
+    await expect(criarLojaAction(fd)).rejects.toMatchObject({ code: "validation" });
+    await expect(criarLojaAction(fd)).rejects.toThrow(/3 Lojas/);
   });
 });
 
