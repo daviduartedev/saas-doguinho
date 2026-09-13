@@ -63,7 +63,7 @@ export function Button({
       className={cn(buttonVariants({ variant, size }), className)}
       disabled={busy}
       loading={pending}
-      loaderProps={{ type: "dots", color: outline || ghost ? "var(--ink)" : "white" }}
+      loaderProps={{ type: "oval", color: outline || ghost ? "var(--ink)" : "white" }}
       styles={{
         root: outline
           ? {
