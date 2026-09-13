@@ -4,6 +4,10 @@ export function actorCan(actor: Actor, permission: Permission): boolean {
   return actor.isDono || actor.permissions.includes(permission);
 }
 
+export function homePath(actor: Pick<Actor, "isDono">): "/dashboard" | "/fechamento" {
+  return actor.isDono ? "/dashboard" : "/fechamento";
+}
+
 export function rotuloStatus(status: FechamentoStatus): string | null {
   switch (status) {
     case "nunca_fechou":

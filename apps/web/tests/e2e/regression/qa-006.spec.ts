@@ -7,7 +7,8 @@ test("QA-006: submit com sessão expirada mostra mensagem (não 'Application err
   await page.getByLabel("E-mail", { exact: true }).fill("dono@doguinho.local");
   await page.getByLabel("Senha", { exact: true }).fill("coruja");
   await page.getByRole("button", { name: "Entrar" }).click();
-  await page.waitForURL("**/fechamento**");
+  await page.waitForURL("**/dashboard**");
+  await page.goto("/fechamento");
 
   await page.locator('input[aria-label^="Quantidade restante de"]').first().fill("3");
   await context.clearCookies(); // simula expiração da sessão no meio do preenchimento

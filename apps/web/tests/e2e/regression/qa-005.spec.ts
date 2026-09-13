@@ -6,7 +6,8 @@ test("QA-005: submit offline mostra mensagem de erro (não falha em silêncio)",
   await page.getByLabel("E-mail", { exact: true }).fill("dono@doguinho.local");
   await page.getByLabel("Senha", { exact: true }).fill("coruja");
   await page.getByRole("button", { name: "Entrar" }).click();
-  await page.waitForURL("**/fechamento**");
+  await page.waitForURL("**/dashboard**");
+  await page.goto("/fechamento");
 
   await page.locator('input[aria-label^="Quantidade restante de"]').first().fill("3");
   await context.setOffline(true); // corta a rede antes do envio

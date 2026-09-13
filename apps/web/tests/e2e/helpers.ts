@@ -14,7 +14,7 @@ export async function login(page: Page, email: string, senha: string) {
   await page.getByLabel("E-mail", { exact: true }).fill(email);
   await page.getByLabel("Senha", { exact: true }).fill(senha);
   await page.getByRole("button", { name: "Entrar" }).click();
-  await page.waitForURL("**/fechamento**");
+  await page.waitForURL(email === DONO.email ? /\/dashboard/ : /\/fechamento/);
 }
 
 export async function loginDono(page: Page) {

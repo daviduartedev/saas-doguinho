@@ -11,9 +11,9 @@ import {
 } from "./helpers";
 
 test.describe("Autenticação", () => {
-  test("login com credenciais válidas leva ao Fechamento", async ({ page }) => {
+  test("login do Dono leva ao Dashboard", async ({ page }) => {
     await loginDono(page);
-    await expect(page).toHaveURL(/\/fechamento/);
+    await expect(page).toHaveURL(/\/dashboard/);
     await expect(page.getByRole("navigation").first()).toBeVisible();
   });
 
@@ -39,8 +39,14 @@ test.describe("Autenticação", () => {
     await page.waitForURL("**/entrar**");
   });
 
-  test("usuário logado que visita /entrar é levado ao Fechamento", async ({ page }) => {
+  test("Dono logado que visita /entrar é levado ao Dashboard", async ({ page }) => {
     await loginDono(page);
+    await page.goto("/entrar");
+    await page.waitForURL("**/dashboard**");
+  });
+
+  test("Operador logado que visita /entrar é levado ao Fechamento", async ({ page }) => {
+    await login(page, OPERADOR_CENTRO.email, OPERADOR_CENTRO.senha);
     await page.goto("/entrar");
     await page.waitForURL("**/fechamento**");
   });

@@ -8,7 +8,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/entrar", request.url));
   }
   if (session && entrar) {
-    return NextResponse.redirect(new URL("/fechamento", request.url));
+    return NextResponse.redirect(new URL("/", request.url));
   }
   return NextResponse.next();
 }

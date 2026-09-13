@@ -850,7 +850,7 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
   };
 }
 
-export { actorCan, rotuloStatus } from "./view";
+export { actorCan, homePath, rotuloStatus } from "./view";
 
 export function requireActor(actor: Actor | null): Actor {
   if (!actor) throw new UnauthenticatedError();

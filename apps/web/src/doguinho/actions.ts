@@ -7,6 +7,7 @@ import { SESSION_COOKIE } from "./constants";
 import { loginAllowed, loginSucceeded } from "./rate-limit";
 import { getApp } from "./runtime";
 import { sessionCookieOptions } from "./sessao";
+import { homePath } from "./view";
 
 export async function entrarAction(formData: FormData) {
   const email = String(formData.get("email") ?? "");
@@ -14,17 +15,19 @@ export async function entrarAction(formData: FormData) {
   if (!loginAllowed(email)) {
     redirect("/entrar?erro=1");
   }
+  let destino: ReturnType<typeof homePath>;
   try {
     const app = await getApp();
     const session = await app.entrar({ email, senha });
     loginSucceeded(email);
     const jar = await cookies();
     jar.set(SESSION_COOKIE, session.token, sessionCookieOptions());
+    destino = homePath(session.actor);
   } catch (error) {
     if (error instanceof AppError) redirect("/entrar?erro=1");
     redirect("/entrar?erro=1");
   }
-  redirect("/fechamento");
+  redirect(destino);
 }
 
 export async function sairAction() {
