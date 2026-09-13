@@ -17,6 +17,13 @@ export type StoredSession = {
   createdAt: number;
 };
 
+export type SessionChrome = {
+  session: StoredSession;
+  user: StoredUser;
+  lojas: Loja[];
+  vinculoLojaIds: string[];
+};
+
 export type StoredRascunho = {
   lojaId: string;
   organizationId: string;
@@ -69,6 +76,7 @@ export type Store = {
 
   setVinculos: (userId: string, lojaIds: string[]) => Promise<void>;
   vinculosOf: (userId: string) => Promise<string[]>;
+  listVinculosByOrg: (organizationId: string) => Promise<Array<{ userId: string; lojaId: string }>>;
 
   upsertRascunho: (row: StoredRascunho) => Promise<void>;
   getRascunho: (lojaId: string, calendarDay: string) => Promise<StoredRascunho | null>;
@@ -90,6 +98,7 @@ export type Store = {
 
   insertSession: (row: StoredSession) => Promise<void>;
   getSession: (token: string) => Promise<StoredSession | null>;
+  getSessionChrome: (token: string) => Promise<SessionChrome | null>;
   deleteSession: (token: string) => Promise<void>;
   deleteSessionsForUser: (userId: string) => Promise<void>;
 

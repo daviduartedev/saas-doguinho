@@ -113,7 +113,7 @@ describe("Seed de um Operador por Loja", () => {
     expect((await app.listarLojas(session.actor)).map((loja) => loja.nome)).toEqual(["Magalhães"]);
   });
 
-  it("resets a leftover Operador password to the seed senha on re-run", async () => {
+  it("does not overwrite an existing Operador password on re-run", async () => {
     const { app, store } = await createTestApp();
     const dono = (await app.entrar({ email: SEED_DONO_EMAIL, senha: SEED_DONO_PASSWORD })).actor;
     const centroOp = (await operadoresDoSeed(app, dono)).find(
@@ -126,9 +126,12 @@ describe("Seed de um Operador por Loja", () => {
 
     await app.seed();
 
+    await expect(
+      app.entrar({ email: "operador.centro@doguinho.local", senha: "coruja" }),
+    ).rejects.toThrow(/E-mail ou senha/);
     const session = await app.entrar({
       email: "operador.centro@doguinho.local",
-      senha: "coruja",
+      senha: "qa123456",
     });
     expect(session.actor.userId).toBe(centroOp.id);
   });

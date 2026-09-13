@@ -159,6 +159,15 @@ export async function createPostgresStore(url: string): Promise<Store> {
       const rows = await db()`SELECT loja_id FROM vinculos WHERE user_id = ${userId}`;
       return rows.map((row) => String(row.loja_id));
     },
+    async listVinculosByOrg(organizationId) {
+      const rows = await db()`
+        SELECT v.user_id, v.loja_id
+        FROM vinculos v
+        INNER JOIN users u ON u.id = v.user_id
+        WHERE u.organization_id = ${organizationId}
+      `;
+      return rows.map((row) => ({ userId: String(row.user_id), lojaId: String(row.loja_id) }));
+    },
 
     async upsertRascunho(row) {
       await db()`INSERT INTO rascunhos (loja_id, organization_id, calendar_day, linhas) VALUES (${row.lojaId}, ${row.organizationId}, ${row.calendarDay}, ${JSON.stringify(row.linhas)})
@@ -225,6 +234,64 @@ export async function createPostgresStore(url: string): Promise<Store> {
       return rows[0]
         ? { token: String(rows[0].token), userId: String(rows[0].user_id), createdAt: Number(rows[0].created_at) }
         : null;
+    },
+    async getSessionChrome(token) {
+      const rows = await db()`
+        SELECT
+          s.token,
+          s.user_id,
+          s.created_at,
+          u.id,
+          u.organization_id,
+          u.email,
+          u.nome,
+          u.is_dono,
+          u.disabled,
+          u.perfil_id,
+          u.password_hash,
+          (
+            SELECT COALESCE(json_agg(json_build_object(
+              'id', l.id,
+              'organizationId', l.organization_id,
+              'nome', l.nome
+            ) ORDER BY l.nome), '[]'::json)
+            FROM lojas l
+            WHERE l.organization_id = u.organization_id
+          ) AS lojas,
+          (
+            SELECT COALESCE(json_agg(v.loja_id), '[]'::json)
+            FROM vinculos v
+            WHERE v.user_id = u.id
+          ) AS vinculo_loja_ids
+        FROM sessions s
+        JOIN users u ON u.id = s.user_id
+        WHERE s.token = ${token}
+      `;
+      const row = rows[0];
+      if (!row) return null;
+      const lojasRaw = typeof row.lojas === "string" ? JSON.parse(row.lojas) : row.lojas;
+      const vinculosRaw =
+        typeof row.vinculo_loja_ids === "string" ? JSON.parse(row.vinculo_loja_ids) : row.vinculo_loja_ids;
+      const lojas = Array.isArray(lojasRaw)
+        ? lojasRaw.map((loja: { id: string; organizationId: string; nome: string }) => ({
+            id: String(loja.id),
+            organizationId: String(loja.organizationId),
+            nome: String(loja.nome),
+          }))
+        : [];
+      const vinculoLojaIds = Array.isArray(vinculosRaw)
+        ? vinculosRaw.map((id: unknown) => String(id)).filter((id) => id && id !== "null")
+        : [];
+      return {
+        session: {
+          token: String(row.token),
+          userId: String(row.user_id),
+          createdAt: Number(row.created_at),
+        },
+        user: mapUser(row),
+        lojas,
+        vinculoLojaIds,
+      };
     },
     async deleteSession(token) {
       await db()`DELETE FROM sessions WHERE token = ${token}`;
