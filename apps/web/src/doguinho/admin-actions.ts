@@ -84,6 +84,20 @@ export async function desativarProdutoAction(formData: FormData): Promise<void> 
   }
 }
 
+export async function excluirProdutoAction(formData: FormData): Promise<void> {
+  const actor = await exigirActor();
+  try {
+    const app = await getApp();
+    await app.excluirProduto(actor, { id: String(formData.get("id") ?? "") });
+    revalidatePath("/produtos");
+    revalidatePath("/fechamento");
+    revalidatePath("/estoque");
+    revalidatePath("/historico");
+  } catch (error) {
+    fail(error);
+  }
+}
+
 export async function criarPerfilAction(formData: FormData): Promise<void> {
   const actor = await exigirActor();
   const permissions = ALL_PERMISSIONS.filter((item) => formData.get(`perm_${item}`) === "on");

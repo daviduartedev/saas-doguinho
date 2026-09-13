@@ -50,30 +50,37 @@ export async function createPostgresStore(url: string): Promise<Store> {
     },
 
     async insertProduto(row) {
-      await db()`INSERT INTO produtos (id, organization_id, nome, unidade, ativo) VALUES (${row.id}, ${row.organizationId}, ${row.nome}, ${row.unidade}, ${row.ativo})`;
+      await db()`INSERT INTO produtos (id, organization_id, nome, unidade, ativo, excluido) VALUES (${row.id}, ${row.organizationId}, ${row.nome}, ${row.unidade}, ${row.ativo}, ${row.excluido})`;
     },
     async updateProduto(id, patch) {
-      const rows = await db()`SELECT id, organization_id, nome, unidade, ativo FROM produtos WHERE id = ${id}`;
+      const rows = await db()`SELECT id, organization_id, nome, unidade, ativo, excluido FROM produtos WHERE id = ${id}`;
       const atual = rows[0] ? mapProduto(rows[0]) : null;
       if (!atual) return;
       const next = { ...atual, ...patch };
-      await db()`UPDATE produtos SET nome = ${next.nome}, unidade = ${next.unidade}, ativo = ${next.ativo} WHERE id = ${id}`;
+      await db()`UPDATE produtos SET nome = ${next.nome}, unidade = ${next.unidade}, ativo = ${next.ativo}, excluido = ${next.excluido} WHERE id = ${id}`;
     },
     async deleteProduto(id) {
       await db()`DELETE FROM produtos WHERE id = ${id}`;
     },
     async getProduto(id) {
-      const rows = await db()`SELECT id, organization_id, nome, unidade, ativo FROM produtos WHERE id = ${id}`;
+      const rows = await db()`SELECT id, organization_id, nome, unidade, ativo, excluido FROM produtos WHERE id = ${id}`;
       return rows[0] ? mapProduto(rows[0]) : null;
     },
     async listProdutos(organizationId) {
-      const rows = await db()`SELECT id, organization_id, nome, unidade, ativo FROM produtos WHERE organization_id = ${organizationId} ORDER BY nome`;
+      const rows = await db()`SELECT id, organization_id, nome, unidade, ativo, excluido FROM produtos WHERE organization_id = ${organizationId} ORDER BY nome`;
       return rows.map(mapProduto);
     },
     async findProdutoByName(organizationId, nome) {
       const target = normalizeName(nome).toLowerCase();
-      const rows = await db()`SELECT id, organization_id, nome, unidade, ativo FROM produtos WHERE organization_id = ${organizationId}`;
-      return rows.map(mapProduto).find((produto) => normalizeName(produto.nome).toLowerCase() === target) ?? null;
+      const rows = await db()`SELECT id, organization_id, nome, unidade, ativo, excluido FROM produtos WHERE organization_id = ${organizationId}`;
+      return (
+        rows
+          .map(mapProduto)
+          .find(
+            (produto) =>
+              !produto.excluido && normalizeName(produto.nome).toLowerCase() === target,
+          ) ?? null
+      );
     },
 
     async insertPerfil(row) {
@@ -261,8 +268,10 @@ async function migrate(sql: Sql) {
       organization_id TEXT NOT NULL REFERENCES organizations(id),
       nome TEXT NOT NULL,
       unidade TEXT NOT NULL,
-      ativo BOOLEAN NOT NULL
+      ativo BOOLEAN NOT NULL,
+      excluido BOOLEAN NOT NULL DEFAULT false
     )`;
+  await sql`ALTER TABLE produtos ADD COLUMN IF NOT EXISTS excluido BOOLEAN NOT NULL DEFAULT false`;
   await sql`CREATE TABLE IF NOT EXISTS perfis (
       id TEXT PRIMARY KEY,
       organization_id TEXT NOT NULL REFERENCES organizations(id),
@@ -349,6 +358,7 @@ function mapProduto(row: Record<string, unknown>): Produto {
     nome: String(row.nome),
     unidade: row.unidade as Produto["unidade"],
     ativo: Boolean(row.ativo),
+    excluido: Boolean(row.excluido),
   };
 }
 

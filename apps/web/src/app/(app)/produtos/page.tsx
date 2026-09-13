@@ -6,6 +6,7 @@ import {
   criarProdutoAction,
   desativarProdutoAction,
   editarProdutoAction,
+  excluirProdutoAction,
 } from "@/doguinho/admin-actions";
 import { actorCan } from "@/doguinho/view";
 import { UNIDADES } from "@/doguinho/types";
@@ -33,6 +34,7 @@ export default async function ProdutosPage({
           <h1 className="font-display text-3xl font-bold text-ink">Produtos</h1>
           <p className="mt-2 max-w-xl text-sm text-steam">
             Um catálogo para todas as Lojas. Desativar tira do próximo Fechamento e guarda o histórico.
+            Excluir some do catálogo. O passado permanece no Histórico.
           </p>
         </header>
 
@@ -107,6 +109,9 @@ export default async function ProdutosPage({
                     Desativar
                   </SubmitButton>
                 ) : null}
+                <SubmitButton formAction={excluirProdutoAction} variant="ghost" size="sm">
+                  Excluir
+                </SubmitButton>
               </div>
             </form>
           ))}

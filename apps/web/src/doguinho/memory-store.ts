@@ -71,6 +71,7 @@ export function createMemoryStore(): Store {
         [...produtos.values()].find(
           (produto) =>
             produto.organizationId === organizationId &&
+            !produto.excluido &&
             normalizeName(produto.nome).toLowerCase() === target,
         ) ?? null
       );

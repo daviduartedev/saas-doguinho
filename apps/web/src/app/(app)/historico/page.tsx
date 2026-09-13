@@ -16,7 +16,8 @@ export default async function HistoricoPage({
   const historico = lojaId ? await app.historico(actor, { lojaId }) : [];
   const listing = paginate(historico, page);
   const lojaNome = lojas.find((item) => item.id === lojaId)?.nome ?? "";
-  const nomeProduto = (id: string) => produtos.find((produto) => produto.id === id)?.nome ?? id;
+  const nomeProduto = (id: string, nomes: Record<string, string>) =>
+    nomes[id] ?? produtos.find((produto) => produto.id === id)?.nome ?? id;
 
   return (
     <PageCanvas>
@@ -62,7 +63,7 @@ export default async function HistoricoPage({
                     return (
                       <tr key={linha.produtoId} className="border-t border-border">
                         <td className="listing-cell" data-label="Produto">
-                          {nomeProduto(linha.produtoId)}
+                          {nomeProduto(linha.produtoId, row.produtoNomes)}
                         </td>
                         <td className="listing-cell tabular text-right" data-label="Anterior">
                           {linha.anterior ?? ""}

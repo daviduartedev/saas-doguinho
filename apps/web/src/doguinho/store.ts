@@ -42,7 +42,7 @@ export type Store = {
   insertProduto: (row: Produto) => Promise<void>;
   updateProduto: (
     id: string,
-    patch: { nome?: string; unidade?: UnidadeMedida; ativo?: boolean },
+    patch: { nome?: string; unidade?: UnidadeMedida; ativo?: boolean; excluido?: boolean },
   ) => Promise<void>;
   deleteProduto: (id: string) => Promise<void>;
   getProduto: (id: string) => Promise<Produto | null>;

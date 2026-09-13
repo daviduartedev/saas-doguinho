@@ -287,26 +287,35 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
     }));
   }
 
+  function produtoNomesFrom(produtos: Produto[]): Record<string, string> {
+    return Object.fromEntries(produtos.map((produto) => [produto.id, produto.nome]));
+  }
+
   async function historyRows(lojaId: string): Promise<HistoryRow[]> {
-    const [submissions, users] = await Promise.all([
+    const [submissions, users, produtos] = await Promise.all([
       deps.store.listSubmissions(lojaId),
       deps.store.listUsers(organizationId),
+      deps.store.listProdutos(organizationId),
     ]);
     const nomes = new Map(users.map((user) => [user.id, user.nome]));
+    const produtoNomes = produtoNomesFrom(produtos);
     return [...submissions]
       .sort((a, b) => (a.enviadoEm < b.enviadoEm ? 1 : -1))
       .map((submission) => ({
         submission,
         usuarioNome: nomes.get(submission.usuarioId) ?? "Usuário",
+        produtoNomes,
       }));
   }
 
   async function historyByLoja(lojas: Loja[]): Promise<Map<string, HistoryRow[]>> {
-    const [submissions, users] = await Promise.all([
+    const [submissions, users, produtos] = await Promise.all([
       deps.store.listSubmissionsByOrg(organizationId),
       deps.store.listUsers(organizationId),
+      deps.store.listProdutos(organizationId),
     ]);
     const nomes = new Map(users.map((user) => [user.id, user.nome]));
+    const produtoNomes = produtoNomesFrom(produtos);
     const visiveis = new Set(lojas.map((loja) => loja.id));
     const grouped = new Map<string, HistoryRow[]>();
     for (const loja of lojas) grouped.set(loja.id, []);
@@ -316,6 +325,7 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
       grouped.get(submission.lojaId)!.push({
         submission,
         usuarioNome: nomes.get(submission.usuarioId) ?? "Usuário",
+        produtoNomes,
       });
     }
     return grouped;
@@ -396,6 +406,7 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
             nome: produto.nome,
             unidade: produto.unidade,
             ativo: true,
+            excluido: false,
           });
         }
         await deps.store.insertPerfil({
@@ -479,7 +490,9 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
 
     async listarProdutos(actor) {
       assertOrg(actor);
-      return deps.store.listProdutos(actor.organizationId);
+      return (await deps.store.listProdutos(actor.organizationId)).filter(
+        (produto) => !produto.excluido,
+      );
     },
 
     async criarProduto(actor, input) {
@@ -491,7 +504,7 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
       if (!isUnidadeMedida(input.unidade)) {
         throw new ValidationError("Unidade de medida inválida.");
       }
-      // QA-007: Produto desativado guarda histórico, mas não queima o nome.
+      // QA-007 / #40: desativado ou excluído com histórico não queima o nome.
       const existente = await deps.store.findProdutoByName(organizationId, nome);
       if (existente?.ativo) {
         throw new ConflictError("Já existe um Produto com esse nome.");
@@ -502,6 +515,7 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
         nome,
         unidade: input.unidade,
         ativo: true,
+        excluido: false,
       };
       await deps.store.insertProduto(produto);
       return produto;
@@ -510,7 +524,9 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
     async editarProduto(actor, input) {
       requirePermission(actor, "manage_produto");
       const produto = await deps.store.getProduto(input.id);
-      if (!produto || produto.organizationId !== organizationId) throw new ForbiddenError();
+      if (!produto || produto.organizationId !== organizationId || produto.excluido) {
+        throw new ForbiddenError();
+      }
       const nome = normalizeName(input.nome);
       if (!nome) throw new ValidationError("Informe o nome do Produto.");
       // QA-010: maxLength do client é contornável — o servidor enforce o teto.
@@ -529,7 +545,9 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
     async desativarProduto(actor, input) {
       requirePermission(actor, "manage_produto");
       const produto = await deps.store.getProduto(input.id);
-      if (!produto || produto.organizationId !== organizationId) throw new ForbiddenError();
+      if (!produto || produto.organizationId !== organizationId || produto.excluido) {
+        throw new ForbiddenError();
+      }
       await deps.store.updateProduto(produto.id, { ativo: false });
     },
 
@@ -537,8 +555,10 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
       requirePermission(actor, "manage_produto");
       const produto = await deps.store.getProduto(input.id);
       if (!produto || produto.organizationId !== organizationId) throw new ForbiddenError();
+      if (produto.excluido) return;
       if (await deps.store.produtoHasHistory(produto.id)) {
-        throw new ConflictError("Produto com histórico de Fechamento não pode ser excluído.");
+        await deps.store.updateProduto(produto.id, { ativo: false, excluido: true });
+        return;
       }
       await deps.store.deleteProduto(produto.id);
     },
