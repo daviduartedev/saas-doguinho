@@ -51,6 +51,17 @@ export async function selecionarLoja(page: Page, nome: string): Promise<string> 
   return id;
 }
 
+/** Seleciona Todas as Lojas no filtro do header (?loja=todas). */
+export async function selecionarTodasAsLojas(page: Page) {
+  const antes = page.url();
+  await page.getByRole("banner").getByRole("combobox").click();
+  await page.keyboard.type("Todas as Lojas", { delay: 15 });
+  await page.keyboard.press("Enter");
+  await page.waitForURL(
+    (url) => url.toString() !== antes && url.searchParams.get("loja") === "todas",
+  );
+}
+
 /** Preenche TODAS as quantidades do formulário de Fechamento, em TODAS as páginas
  *  do pager cliente (8/página — o catálogo cresce entre runs). */
 export async function preencherQuantidades(page: Page, valor: string) {

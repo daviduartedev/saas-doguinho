@@ -11,6 +11,9 @@ export function FechamentoRelatorio({
   envios,
   page,
   per,
+  lojaFiltro,
+  tituloTag = "h1",
+  intro = true,
 }: {
   lojaId: string;
   lojaNome: string;
@@ -19,20 +22,33 @@ export function FechamentoRelatorio({
   envios: HistoryRow[];
   page?: string;
   per?: string;
+  lojaFiltro?: string;
+  tituloTag?: "h1" | "h2";
+  intro?: boolean;
 }) {
   const ativos = produtos.filter((produto) => produto.ativo);
   const listing = paginate(ativos, page, per);
   const porId = new Map(linhas.map((linha) => [linha.produtoId, linha.restante]));
+  const Titulo = tituloTag;
+  const EnviosTitulo = tituloTag === "h1" ? "h2" : "h3";
 
   return (
-    <div className="w-full">
+    <section className="w-full">
       <header className="mb-5">
-        <h1 className="font-display text-3xl font-bold text-ink text-balance">
+        <Titulo
+          className={
+            tituloTag === "h1"
+              ? "font-display text-3xl font-bold text-ink text-balance"
+              : "font-display text-2xl font-bold text-ink text-balance"
+          }
+        >
           Fechamento · {lojaNome}
-        </h1>
-        <p className="mt-2 max-w-2xl text-[15px] text-steam">
-          Quantidade restante do último envio de hoje nesta Loja. Rascunho não entra.
-        </p>
+        </Titulo>
+        {intro ? (
+          <p className="mt-2 max-w-2xl text-[15px] text-steam">
+            Quantidade restante do último envio de hoje nesta Loja. Rascunho não entra.
+          </p>
+        ) : null}
       </header>
 
       {ativos.length === 0 ? (
@@ -82,14 +98,14 @@ export function FechamentoRelatorio({
             size={listing.size}
             from={listing.from}
             to={listing.to}
-            params={{ loja: lojaId, per }}
+            params={{ loja: lojaFiltro ?? lojaId, per }}
             noun="produtos"
           />
         </>
       )}
 
       <section className="mt-10">
-        <h2 className="font-display text-xl font-bold text-ink">Envios de hoje</h2>
+        <EnviosTitulo className="font-display text-xl font-bold text-ink">Envios de hoje</EnviosTitulo>
         <p className="mt-2 max-w-2xl text-[15px] text-steam">
           Quem enviou nesta Loja hoje. O Histórico guarda todos os dias.
         </p>
@@ -101,6 +117,6 @@ export function FechamentoRelatorio({
           </div>
         )}
       </section>
-    </div>
+    </section>
   );
 }
