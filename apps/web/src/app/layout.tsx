@@ -1,9 +1,15 @@
 import type { Metadata } from "next";
 import { Red_Hat_Display, Red_Hat_Text } from "next/font/google";
 import { ColorSchemeScript, MantineProvider, mantineHtmlProps } from "@mantine/core";
+import { DatesProvider } from "@mantine/dates";
+import dayjs from "dayjs";
+import "dayjs/locale/pt-br";
 import { doguinhoTheme } from "@/lib/mantine-theme";
 import "@mantine/core/styles.css";
+import "@mantine/dates/styles.css";
 import "./globals.css";
+
+dayjs.locale("pt-br");
 
 const display = Red_Hat_Display({
   subsets: ["latin"],
@@ -38,7 +44,9 @@ export default function RootLayout({
       </head>
       <body className={`${display.variable} ${text.variable} font-sans antialiased`}>
         <MantineProvider theme={doguinhoTheme} defaultColorScheme="light" forceColorScheme="light">
-          {children}
+          <DatesProvider settings={{ locale: "pt-br" }}>
+            {children}
+          </DatesProvider>
         </MantineProvider>
       </body>
     </html>

@@ -1,7 +1,8 @@
 "use client";
 
+import { DatePickerInput } from "@mantine/dates";
+import dayjs from "dayjs";
 import { useRouter } from "next/navigation";
-import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import type { Periodo, PeriodoPreset } from "@/doguinho/periodo";
 
@@ -76,7 +77,7 @@ export function PeriodoFiltro({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap overflow-hidden rounded-md border border-border">
+      <div className="inline-flex w-fit overflow-hidden rounded-md border border-border">
         {PRESETS.map((item) => (
           <button
             key={item.preset}
@@ -95,25 +96,27 @@ export function PeriodoFiltro({
         ))}
       </div>
       {periodo.preset === "custom" ? (
-        <div className="flex flex-wrap items-center gap-3">
-          <label className="flex flex-col gap-1 text-xs font-medium text-steam">
-            De
-            <Input
-              type="date"
-              value={periodo.from}
-              onChange={(event) => escolherCustom(event.target.value, periodo.to)}
-              className="h-9 w-auto text-sm"
-            />
-          </label>
-          <label className="flex flex-col gap-1 text-xs font-medium text-steam">
-            Até
-            <Input
-              type="date"
-              value={periodo.to}
-              onChange={(event) => escolherCustom(periodo.from, event.target.value)}
-              className="h-9 w-auto text-sm"
-            />
-          </label>
+        <div className="flex flex-wrap items-end gap-3">
+          <DatePickerInput
+            label="De"
+            value={periodo.from ? dayjs(periodo.from, "YYYY-MM-DD").toDate() : null}
+            onChange={(date) => {
+              if (date) escolherCustom(dayjs(date).format("YYYY-MM-DD"), periodo.to);
+            }}
+            valueFormat="YYYY-MM-DD"
+            size="sm"
+            className="w-auto"
+          />
+          <DatePickerInput
+            label="Até"
+            value={periodo.to ? dayjs(periodo.to, "YYYY-MM-DD").toDate() : null}
+            onChange={(date) => {
+              if (date) escolherCustom(periodo.from, dayjs(date).format("YYYY-MM-DD"));
+            }}
+            valueFormat="YYYY-MM-DD"
+            size="sm"
+            className="w-auto"
+          />
         </div>
       ) : null}
     </div>
