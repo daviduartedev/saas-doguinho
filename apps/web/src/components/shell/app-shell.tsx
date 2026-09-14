@@ -5,6 +5,7 @@ import { Suspense, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
+  CircleUser,
   ClipboardList,
   History,
   LayoutDashboard,
@@ -90,9 +91,15 @@ function NavChrome({
         <SideNav actor={actor} lojas={lojas} onNavigate={onNavigate} />
       </Suspense>
       <footer className="app-nav-side-foot">
-        <p className="app-actor">
-          {actor.isDono ? "Dono" : "Operador"} · {actor.nome}
-        </p>
+        <div className="app-actor">
+          <span className="app-actor-avatar" aria-hidden>
+            <CircleUser className="h-5 w-5" />
+          </span>
+          <div className="app-actor-text">
+            <span className="app-actor-role">{actor.isDono ? "Dono" : "Operador"}</span>
+            <span className="app-actor-name">{actor.nome}</span>
+          </div>
+        </div>
         <form action={sairAction}>
           <SubmitButton variant="awning" className="w-full justify-start gap-3 px-3 text-white hover:bg-ketchup-hot">
             <LogOut className="h-4 w-4" />
