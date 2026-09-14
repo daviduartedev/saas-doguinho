@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ["@mantine/core", "@mantine/hooks"],
   },
+  async rewrites() {
+    return [{ source: "/favicon.ico", destination: "/marca-doguinho.png" }];
+  },
   async headers() {
     return [
       {

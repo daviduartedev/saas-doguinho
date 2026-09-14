@@ -95,13 +95,13 @@ export function FechamentoForm({
         </p>
       ) : null}
 
-      {precisaCorrecao ? (
+      {precisaCorrecao && podeEnviar ? (
         <p className="mb-4 rounded-md bg-ketchup px-3 py-2 text-sm font-medium text-white">
           Já houve Fechamento hoje. Um novo envio é Correção e exige Justificativa. O registro anterior permanece.
         </p>
       ) : null}
 
-      {status === "rascunho" ? (
+      {status === "rascunho" && podeEnviar ? (
         <p className="mb-4 rounded-md border border-mustard bg-sheet px-3 py-2 text-sm">
           Rascunho na Loja. Ainda não é Estoque.
         </p>

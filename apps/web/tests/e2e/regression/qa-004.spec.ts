@@ -8,7 +8,7 @@ test("QA-004: produto duplicado mostra a mensagem de domínio, não 'Application
   await page.getByLabel("E-mail", { exact: true }).fill("dono@doguinho.local");
   await page.getByLabel("Senha", { exact: true }).fill("coruja");
   await page.getByRole("button", { name: "Entrar" }).click();
-  await page.waitForURL("**/fechamento**");
+  await page.waitForURL("**/dashboard**");
 
   await page.goto("/produtos");
   await page.locator("input#nome").fill("Milho"); // já existe no seed

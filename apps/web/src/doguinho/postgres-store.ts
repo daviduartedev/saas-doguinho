@@ -50,30 +50,37 @@ export async function createPostgresStore(url: string): Promise<Store> {
     },
 
     async insertProduto(row) {
-      await db()`INSERT INTO produtos (id, organization_id, nome, unidade, ativo) VALUES (${row.id}, ${row.organizationId}, ${row.nome}, ${row.unidade}, ${row.ativo})`;
+      await db()`INSERT INTO produtos (id, organization_id, nome, unidade, ativo, excluido) VALUES (${row.id}, ${row.organizationId}, ${row.nome}, ${row.unidade}, ${row.ativo}, ${row.excluido})`;
     },
     async updateProduto(id, patch) {
-      const rows = await db()`SELECT id, organization_id, nome, unidade, ativo FROM produtos WHERE id = ${id}`;
+      const rows = await db()`SELECT id, organization_id, nome, unidade, ativo, excluido FROM produtos WHERE id = ${id}`;
       const atual = rows[0] ? mapProduto(rows[0]) : null;
       if (!atual) return;
       const next = { ...atual, ...patch };
-      await db()`UPDATE produtos SET nome = ${next.nome}, unidade = ${next.unidade}, ativo = ${next.ativo} WHERE id = ${id}`;
+      await db()`UPDATE produtos SET nome = ${next.nome}, unidade = ${next.unidade}, ativo = ${next.ativo}, excluido = ${next.excluido} WHERE id = ${id}`;
     },
     async deleteProduto(id) {
       await db()`DELETE FROM produtos WHERE id = ${id}`;
     },
     async getProduto(id) {
-      const rows = await db()`SELECT id, organization_id, nome, unidade, ativo FROM produtos WHERE id = ${id}`;
+      const rows = await db()`SELECT id, organization_id, nome, unidade, ativo, excluido FROM produtos WHERE id = ${id}`;
       return rows[0] ? mapProduto(rows[0]) : null;
     },
     async listProdutos(organizationId) {
-      const rows = await db()`SELECT id, organization_id, nome, unidade, ativo FROM produtos WHERE organization_id = ${organizationId} ORDER BY nome`;
+      const rows = await db()`SELECT id, organization_id, nome, unidade, ativo, excluido FROM produtos WHERE organization_id = ${organizationId} ORDER BY nome`;
       return rows.map(mapProduto);
     },
     async findProdutoByName(organizationId, nome) {
       const target = normalizeName(nome).toLowerCase();
-      const rows = await db()`SELECT id, organization_id, nome, unidade, ativo FROM produtos WHERE organization_id = ${organizationId}`;
-      return rows.map(mapProduto).find((produto) => normalizeName(produto.nome).toLowerCase() === target) ?? null;
+      const rows = await db()`SELECT id, organization_id, nome, unidade, ativo, excluido FROM produtos WHERE organization_id = ${organizationId}`;
+      return (
+        rows
+          .map(mapProduto)
+          .find(
+            (produto) =>
+              !produto.excluido && normalizeName(produto.nome).toLowerCase() === target,
+          ) ?? null
+      );
     },
 
     async insertPerfil(row) {
@@ -123,7 +130,7 @@ export async function createPostgresStore(url: string): Promise<Store> {
       const atual = rows[0] ? mapUser(rows[0]) : null;
       if (!atual) return;
       const next = { ...atual, ...patch };
-      await db()`UPDATE users SET disabled = ${next.disabled}, perfil_id = ${next.perfilId}, is_dono = ${next.isDono}, nome = ${next.nome} WHERE id = ${id}`;
+      await db()`UPDATE users SET disabled = ${next.disabled}, perfil_id = ${next.perfilId}, is_dono = ${next.isDono}, nome = ${next.nome}, password_hash = ${next.passwordHash} WHERE id = ${id}`;
     },
     async getUserById(id) {
       const rows = await db()`SELECT id, organization_id, email, nome, is_dono, disabled, perfil_id, password_hash FROM users WHERE id = ${id}`;
@@ -151,6 +158,15 @@ export async function createPostgresStore(url: string): Promise<Store> {
     async vinculosOf(userId) {
       const rows = await db()`SELECT loja_id FROM vinculos WHERE user_id = ${userId}`;
       return rows.map((row) => String(row.loja_id));
+    },
+    async listVinculosByOrg(organizationId) {
+      const rows = await db()`
+        SELECT v.user_id, v.loja_id
+        FROM vinculos v
+        INNER JOIN users u ON u.id = v.user_id
+        WHERE u.organization_id = ${organizationId}
+      `;
+      return rows.map((row) => ({ userId: String(row.user_id), lojaId: String(row.loja_id) }));
     },
 
     async upsertRascunho(row) {
@@ -219,6 +235,64 @@ export async function createPostgresStore(url: string): Promise<Store> {
         ? { token: String(rows[0].token), userId: String(rows[0].user_id), createdAt: Number(rows[0].created_at) }
         : null;
     },
+    async getSessionChrome(token) {
+      const rows = await db()`
+        SELECT
+          s.token,
+          s.user_id,
+          s.created_at,
+          u.id,
+          u.organization_id,
+          u.email,
+          u.nome,
+          u.is_dono,
+          u.disabled,
+          u.perfil_id,
+          u.password_hash,
+          (
+            SELECT COALESCE(json_agg(json_build_object(
+              'id', l.id,
+              'organizationId', l.organization_id,
+              'nome', l.nome
+            ) ORDER BY l.nome), '[]'::json)
+            FROM lojas l
+            WHERE l.organization_id = u.organization_id
+          ) AS lojas,
+          (
+            SELECT COALESCE(json_agg(v.loja_id), '[]'::json)
+            FROM vinculos v
+            WHERE v.user_id = u.id
+          ) AS vinculo_loja_ids
+        FROM sessions s
+        JOIN users u ON u.id = s.user_id
+        WHERE s.token = ${token}
+      `;
+      const row = rows[0];
+      if (!row) return null;
+      const lojasRaw = typeof row.lojas === "string" ? JSON.parse(row.lojas) : row.lojas;
+      const vinculosRaw =
+        typeof row.vinculo_loja_ids === "string" ? JSON.parse(row.vinculo_loja_ids) : row.vinculo_loja_ids;
+      const lojas = Array.isArray(lojasRaw)
+        ? lojasRaw.map((loja: { id: string; organizationId: string; nome: string }) => ({
+            id: String(loja.id),
+            organizationId: String(loja.organizationId),
+            nome: String(loja.nome),
+          }))
+        : [];
+      const vinculoLojaIds = Array.isArray(vinculosRaw)
+        ? vinculosRaw.map((id: unknown) => String(id)).filter((id) => id && id !== "null")
+        : [];
+      return {
+        session: {
+          token: String(row.token),
+          userId: String(row.user_id),
+          createdAt: Number(row.created_at),
+        },
+        user: mapUser(row),
+        lojas,
+        vinculoLojaIds,
+      };
+    },
     async deleteSession(token) {
       await db()`DELETE FROM sessions WHERE token = ${token}`;
     },
@@ -261,8 +335,10 @@ async function migrate(sql: Sql) {
       organization_id TEXT NOT NULL REFERENCES organizations(id),
       nome TEXT NOT NULL,
       unidade TEXT NOT NULL,
-      ativo BOOLEAN NOT NULL
+      ativo BOOLEAN NOT NULL,
+      excluido BOOLEAN NOT NULL DEFAULT false
     )`;
+  await sql`ALTER TABLE produtos ADD COLUMN IF NOT EXISTS excluido BOOLEAN NOT NULL DEFAULT false`;
   await sql`CREATE TABLE IF NOT EXISTS perfis (
       id TEXT PRIMARY KEY,
       organization_id TEXT NOT NULL REFERENCES organizations(id),
@@ -349,6 +425,7 @@ function mapProduto(row: Record<string, unknown>): Produto {
     nome: String(row.nome),
     unidade: row.unidade as Produto["unidade"],
     ativo: Boolean(row.ativo),
+    excluido: Boolean(row.excluido),
   };
 }
 

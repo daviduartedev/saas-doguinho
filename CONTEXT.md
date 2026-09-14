@@ -10,7 +10,10 @@ _Avoid_: item controlado, SKU, subconjunto de conferência, produto só de catá
 
 **Produto ativo**:
 Produto que entra no Fechamento. Desativar tira do próximo Fechamento e preserva o histórico.
-_Avoid_: exclusão, apagar produto, delete
+_Avoid_: chamar Desativar de exclusão
+
+**Excluir (Produto)**:
+Tira do catálogo. Sem Fechamento no passado, apaga de verdade. Com histórico, o passado fica no Histórico (nome e quantidades); não entra em Fechamentos futuros; o nome fica livre.
 
 **Dono**:
 Papel de sistema da Organização. Alcance a todas as Lojas. Não é rebaixado por checklist e não remove o próprio acesso se for o último Dono.

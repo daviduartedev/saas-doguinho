@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Suspense } from "react";
+import { Suspense, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
@@ -9,6 +9,7 @@ import {
   History,
   LayoutDashboard,
   LogOut,
+  Menu,
   Package,
   Settings,
   Shield,
@@ -50,45 +51,107 @@ export function AppShell({
   return (
     <div className="app-shell">
       <div className="app-frame">
-        <aside className="app-nav-side bg-awning text-white">
-          <SidebarMarca />
-          <Suspense fallback={<nav className="flex flex-1 flex-col gap-1 px-3" aria-label="Seções" />}>
-            <SideNav actor={actor} lojas={lojas} />
-          </Suspense>
-          <form action={sairAction} className="p-3">
-            <SubmitButton variant="awning" className="w-full justify-start gap-3 px-3 text-white hover:bg-ketchup-hot">
-              <LogOut className="h-4 w-4" />
-              Sair
-            </SubmitButton>
-          </form>
+        <aside className="app-nav-side">
+          <NavChrome actor={actor} lojas={lojas} />
         </aside>
 
         <div className="app-column">
-          <header className="page-gutter relative z-20 flex items-center justify-between gap-3 overflow-visible border-b border-border bg-sheet py-3">
-            <div className="flex min-w-0 items-center gap-3">
-              <Store className="h-4 w-4 shrink-0 text-ketchup" />
-              {lojas.length > 0 ? (
-                <Suspense fallback={<span className="h-10 min-w-[8rem]" />}>
-                  <LojaFiltro lojas={lojas} />
-                </Suspense>
-              ) : (
-                <span className="text-[15px] text-steam">Sem Loja no Vínculo</span>
-              )}
-              <span id="shell-status" className="flex items-center" />
-            </div>
-            <p className="app-actor text-[15px] text-steam">
-              {actor.isDono ? "Dono" : "Operador"} · {actor.nome}
-            </p>
-          </header>
-
+          <ShellHeader actor={actor} lojas={lojas}>
+            <Store className="h-4 w-4 shrink-0 text-ketchup" />
+            {lojas.length === 0 ? (
+              <span className="text-[15px] text-steam">Sem Loja no Vínculo</span>
+            ) : lojas.length > 1 ? (
+              <Suspense fallback={<span className="h-10 min-w-[8rem]" />}>
+                <LojaFiltro lojas={lojas} />
+              </Suspense>
+            ) : null}
+            <span id="shell-status" className="flex items-center" />
+          </ShellHeader>
           <main className="page-gutter flex-1 py-6">{children}</main>
-
-          <Suspense fallback={null}>
-            <BottomNav actor={actor} lojas={lojas} />
-          </Suspense>
         </div>
       </div>
     </div>
+  );
+}
+
+function NavChrome({
+  actor,
+  lojas,
+  onNavigate,
+}: {
+  actor: Actor;
+  lojas: Loja[];
+  onNavigate?: () => void;
+}) {
+  return (
+    <div className="app-nav-panel">
+      <SidebarMarca />
+      <Suspense fallback={<nav className="flex flex-1 flex-col gap-1 px-3" aria-label="Seções" />}>
+        <SideNav actor={actor} lojas={lojas} onNavigate={onNavigate} />
+      </Suspense>
+      <footer className="app-nav-side-foot">
+        <p className="app-actor">
+          {actor.isDono ? "Dono" : "Operador"} · {actor.nome}
+        </p>
+        <form action={sairAction}>
+          <SubmitButton variant="awning" className="w-full justify-start gap-3 px-3 text-white hover:bg-ketchup-hot">
+            <LogOut className="h-4 w-4" />
+            Sair
+          </SubmitButton>
+        </form>
+      </footer>
+    </div>
+  );
+}
+
+function ShellHeader({
+  actor,
+  lojas,
+  children,
+}: {
+  actor: Actor;
+  lojas: Loja[];
+  children: ReactNode;
+}) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const [aberto, setAberto] = useState(false);
+
+  function abrir() {
+    dialogRef.current?.showModal();
+    setAberto(true);
+  }
+
+  function fechar() {
+    dialogRef.current?.close();
+    setAberto(false);
+  }
+
+  return (
+    <>
+      <header className="page-gutter relative z-20 flex items-center gap-3 overflow-visible border-b border-border bg-sheet py-3">
+        <button
+          type="button"
+          className="app-nav-toggle"
+          aria-label="Abrir menu"
+          aria-expanded={aberto}
+          onClick={abrir}
+        >
+          <Menu className="h-5 w-5" aria-hidden />
+        </button>
+        {children}
+      </header>
+      <dialog
+        ref={dialogRef}
+        className="app-nav-dialog"
+        aria-label="Menu"
+        onClose={() => setAberto(false)}
+        onClick={(event) => {
+          if (event.target === event.currentTarget) fechar();
+        }}
+      >
+        <NavChrome actor={actor} lojas={lojas} onNavigate={fechar} />
+      </dialog>
+    </>
   );
 }
 
@@ -101,7 +164,15 @@ function lojaHref(href: string, lojaId: string) {
   return lojaId ? `${href}?loja=${lojaId}` : href;
 }
 
-function SideNav({ actor, lojas }: { actor: Actor; lojas: Loja[] }) {
+function SideNav({
+  actor,
+  lojas,
+  onNavigate,
+}: {
+  actor: Actor;
+  lojas: Loja[];
+  onNavigate?: () => void;
+}) {
   const pathname = usePathname();
   const lojaId = useLojaId(lojas);
   const nav = navItems(actor);
@@ -114,40 +185,13 @@ function SideNav({ actor, lojas }: { actor: Actor; lojas: Loja[] }) {
           <Link
             key={item.href}
             href={lojaHref(item.href, lojaId)}
+            onClick={onNavigate}
             className={cn(
               "relative flex h-12 items-center gap-3 rounded-md px-3 text-[15px] font-semibold",
               ativo ? "bg-ketchup-hot text-white" : "text-white hover:bg-ketchup-hot",
             )}
           >
             {ativo ? <span className="pena absolute -left-1" /> : null}
-            <Icon className="h-4 w-4" />
-            {item.label}
-          </Link>
-        );
-      })}
-    </nav>
-  );
-}
-
-function BottomNav({ actor, lojas }: { actor: Actor; lojas: Loja[] }) {
-  const pathname = usePathname();
-  const lojaId = useLojaId(lojas);
-  const nav = navItems(actor);
-  return (
-    <nav className="app-nav-bottom" aria-label="Seções">
-      {nav.map((item) => {
-        const ativo = pathname.startsWith(item.href);
-        const Icon = item.icon;
-        return (
-          <Link
-            key={item.href}
-            href={lojaHref(item.href, lojaId)}
-            className={cn(
-              "relative flex h-14 min-w-[4.5rem] flex-1 flex-col items-center justify-center gap-1 text-[11px] font-semibold",
-              ativo ? "bg-ketchup-hot text-white" : "text-white",
-            )}
-          >
-            {ativo ? <span className="pena absolute left-1/2 top-0 h-2 w-2 -translate-x-1/2" /> : null}
             <Icon className="h-4 w-4" />
             {item.label}
           </Link>
@@ -172,7 +216,10 @@ function LojaFiltro({ lojas }: { lojas: Loja[] }) {
 
   return (
     <Select value={lojaId || FILTRO_TODAS} onValueChange={escolherLoja}>
-                <SelectTrigger className="h-10 w-max max-w-full justify-start gap-3 border-transparent bg-transparent px-2 text-ink data-[state=open]:border-ketchup data-[state=open]:bg-ketchup data-[state=open]:text-white data-[state=open]:[&_svg]:text-white">
+                <SelectTrigger
+                  aria-label="Loja"
+                  className="h-10 w-max max-w-full justify-start gap-3 border-transparent bg-transparent px-2 text-ink data-[state=open]:border-ketchup data-[state=open]:bg-ketchup data-[state=open]:text-white data-[state=open]:[&_svg]:text-white"
+                >
                   <SelectValue />
                 </SelectTrigger>
       <SelectContent>

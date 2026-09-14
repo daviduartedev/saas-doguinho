@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 
 test("QA-005: submit offline mostra mensagem de erro (não falha em silêncio)", async ({ page, context }) => {
   await page.goto("/entrar");
-  await page.getByLabel("E-mail", { exact: true }).fill("dono@doguinho.local");
+  await page.getByLabel("E-mail", { exact: true }).fill("operador.centro@doguinho.local");
   await page.getByLabel("Senha", { exact: true }).fill("coruja");
   await page.getByRole("button", { name: "Entrar" }).click();
   await page.waitForURL("**/fechamento**");

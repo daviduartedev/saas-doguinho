@@ -14,6 +14,7 @@ import {
   SEED_DONO_EMAIL,
   SEED_DONO_PASSWORD,
   SEED_LOJAS,
+  SEED_OPERADORES,
   SEED_ORGANIZATION_ID,
   SEED_PRODUTOS,
 } from "./seed";
@@ -64,6 +65,7 @@ export type DoguinhoApp = {
   seed: () => Promise<void>;
   entrar: (input: { email: string; senha: string }) => Promise<Session>;
   resolverSessao: (token: string) => Promise<Actor | null>;
+  abrirChrome: (token: string) => Promise<{ actor: Actor; lojas: Loja[] } | null>;
   sair: (token: string) => Promise<void>;
   listarLojas: (actor: Actor) => Promise<Loja[]>;
   criarLoja: (actor: Actor, input: { nome: string }) => Promise<Loja>;
@@ -93,6 +95,10 @@ export type DoguinhoApp = {
   rebaixarDono: (actor: Actor, input: { userId: string }) => Promise<void>;
   estoqueDaLoja: (actor: Actor, lojaId: string) => Promise<EstoqueView>;
   estoqueDasLojas: (actor: Actor) => Promise<EstoqueView[]>;
+  estadoDaLoja: (
+    actor: Actor,
+    lojaId: string,
+  ) => Promise<{ snap: EstoqueView; linhas: QuantidadeLinha[]; produtos: Produto[] }>;
   rascunhoDoDia: (actor: Actor, lojaId: string) => Promise<QuantidadeLinha[]>;
   salvarRascunho: (
     actor: Actor,
@@ -100,6 +106,7 @@ export type DoguinhoApp = {
   ) => Promise<void>;
   enviar: (actor: Actor, input: EnviarInput) => Promise<Submission>;
   historico: (actor: Actor, input: { lojaId: string }) => Promise<HistoryRow[]>;
+  enviosDoDia: (actor: Actor, input: { lojaId: string }) => Promise<HistoryRow[]>;
   dashboard: (actor: Actor) => Promise<Dashboard>;
 };
 
@@ -108,8 +115,8 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
   const ttl = deps.sessionTtlMs ?? SESSION_TTL_MS;
   const dummyHashPromise = deps.passwords.hash("__dummy__");
 
-  async function actorFromUser(user: StoredUser): Promise<Actor> {
-    const vinculoLojaIds = user.isDono ? [] : await deps.store.vinculosOf(user.id);
+  async function actorFromUser(user: StoredUser, knownVinculos?: string[]): Promise<Actor> {
+    const vinculoLojaIds = user.isDono ? [] : (knownVinculos ?? (await deps.store.vinculosOf(user.id)));
     let permissions: Permission[] = [];
     if (user.isDono) permissions = ALL_PERMISSIONS;
     else if (user.perfilId) {
@@ -125,6 +132,23 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
       nome: user.nome,
       email: user.email,
     };
+  }
+
+  function lojasVisiveis(actor: Actor, lojas: Loja[]) {
+    if (actor.isDono) return lojas;
+    return lojas.filter((loja) => actor.vinculoLojaIds.includes(loja.id));
+  }
+
+  async function resolveChrome(token: string) {
+    const row = await deps.store.getSessionChrome(token);
+    if (!row) return null;
+    if (deps.clock.now().getTime() - row.session.createdAt > ttl) {
+      await deps.store.deleteSession(token);
+      return null;
+    }
+    if (row.user.disabled) return null;
+    const actor = await actorFromUser(row.user, row.vinculoLojaIds);
+    return { actor, lojas: lojasVisiveis(actor, row.lojas) };
   }
 
   function assertOrg(actor: Actor) {
@@ -240,10 +264,10 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
     return snapFrom(estoqueRows, rascunhoRow, hoje, todosProdutos);
   }
 
-  async function statusDasLojas(lojas: Loja[]) {
+  async function statusDasLojas(lojas: Loja[], produtos?: Produto[]) {
     const day = calendarDay(deps.clock);
     const [todosProdutos, estoqueRows, rascunhos, hoje] = await Promise.all([
-      deps.store.listProdutos(organizationId),
+      produtos ? Promise.resolve(produtos) : deps.store.listProdutos(organizationId),
       deps.store.listEstoqueByOrg(organizationId),
       deps.store.listRascunhosOnDay(organizationId, day),
       deps.store.listSubmissionsOnDayByOrg(organizationId, day),
@@ -286,26 +310,35 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
     }));
   }
 
+  function produtoNomesFrom(produtos: Produto[]): Record<string, string> {
+    return Object.fromEntries(produtos.map((produto) => [produto.id, produto.nome]));
+  }
+
   async function historyRows(lojaId: string): Promise<HistoryRow[]> {
-    const [submissions, users] = await Promise.all([
+    const [submissions, users, produtos] = await Promise.all([
       deps.store.listSubmissions(lojaId),
       deps.store.listUsers(organizationId),
+      deps.store.listProdutos(organizationId),
     ]);
     const nomes = new Map(users.map((user) => [user.id, user.nome]));
+    const produtoNomes = produtoNomesFrom(produtos);
     return [...submissions]
       .sort((a, b) => (a.enviadoEm < b.enviadoEm ? 1 : -1))
       .map((submission) => ({
         submission,
         usuarioNome: nomes.get(submission.usuarioId) ?? "Usuário",
+        produtoNomes,
       }));
   }
 
-  async function historyByLoja(lojas: Loja[]): Promise<Map<string, HistoryRow[]>> {
-    const [submissions, users] = await Promise.all([
+  async function historyByLoja(lojas: Loja[], produtos?: Produto[]): Promise<Map<string, HistoryRow[]>> {
+    const [submissions, users, catalogo] = await Promise.all([
       deps.store.listSubmissionsByOrg(organizationId),
       deps.store.listUsers(organizationId),
+      produtos ? Promise.resolve(produtos) : deps.store.listProdutos(organizationId),
     ]);
     const nomes = new Map(users.map((user) => [user.id, user.nome]));
+    const produtoNomes = produtoNomesFrom(catalogo);
     const visiveis = new Set(lojas.map((loja) => loja.id));
     const grouped = new Map<string, HistoryRow[]>();
     for (const loja of lojas) grouped.set(loja.id, []);
@@ -315,9 +348,66 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
       grouped.get(submission.lojaId)!.push({
         submission,
         usuarioNome: nomes.get(submission.usuarioId) ?? "Usuário",
+        produtoNomes,
       });
     }
     return grouped;
+  }
+
+  async function ensureSeedOperadores() {
+    const [lojas, users, vinculos] = await Promise.all([
+      deps.store.listLojas(organizationId),
+      deps.store.listUsers(organizationId),
+      deps.store.listVinculosByOrg(organizationId),
+    ]);
+    const byEmail = new Map(users.map((user) => [user.email, user]));
+    const vinculosByUser = new Map<string, string[]>();
+    for (const row of vinculos) {
+      const list = vinculosByUser.get(row.userId) ?? [];
+      list.push(row.lojaId);
+      vinculosByUser.set(row.userId, list);
+    }
+    const missing = SEED_OPERADORES.filter((spec) => !byEmail.has(spec.email));
+    let perfil = missing.length === 0 ? null : await deps.store.findPerfilByName(organizationId, OPERADOR_PERFIL_NOME);
+    if (missing.length > 0 && !perfil) return;
+    let passwordHash: string | null = null;
+    for (const spec of SEED_OPERADORES) {
+      const loja = lojas.find((item) => item.nome === spec.lojaNome);
+      if (!loja) continue;
+      const existing = byEmail.get(spec.email);
+      if (existing) {
+        const atual = vinculosByUser.get(existing.id) ?? [];
+        if (atual.length === 1 && atual[0] === loja.id) continue;
+        // ASVS 8.2 / 8.4: Vínculo is the Loja allowlist — seed keeps exactly one Loja.
+        await deps.store.setVinculos(existing.id, [loja.id]);
+        continue;
+      }
+      if (!perfil) {
+        perfil = await deps.store.findPerfilByName(organizationId, OPERADOR_PERFIL_NOME);
+        if (!perfil) return;
+      }
+      if (!passwordHash) passwordHash = await deps.passwords.hash(SEED_DONO_PASSWORD);
+      const user: StoredUser = {
+        id: deps.ids.id(),
+        organizationId,
+        email: spec.email,
+        nome: spec.nome,
+        isDono: false,
+        disabled: false,
+        perfilId: perfil.id,
+        passwordHash,
+      };
+      try {
+        await deps.store.insertUser(user);
+        await deps.store.setVinculos(user.id, [loja.id]);
+      } catch (error) {
+        if (!(error instanceof ConflictError)) throw error;
+        const reused = await deps.store.getUserByEmail(organizationId, spec.email);
+        if (reused) {
+          await deps.store.setVinculos(reused.id, [loja.id]);
+        }
+      }
+    }
   }
 
   function sameLinhas(a: QuantidadeLinha[], b: Submission["linhas"]) {
@@ -335,44 +425,47 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
 
   return {
     async seed() {
-      if (await deps.store.getOrganization(organizationId)) return;
-      await deps.store.insertOrganization({
-        id: organizationId,
-        nome: "Doguinho do Coruja",
-      });
-      for (const nome of SEED_LOJAS) {
-        await deps.store.insertLoja({
+      if (!(await deps.store.getOrganization(organizationId))) {
+        await deps.store.insertOrganization({
+          id: organizationId,
+          nome: "Doguinho do Coruja",
+        });
+        for (const nome of SEED_LOJAS) {
+          await deps.store.insertLoja({
+            id: deps.ids.id(),
+            organizationId,
+            nome,
+          });
+        }
+        for (const produto of SEED_PRODUTOS) {
+          await deps.store.insertProduto({
+            id: deps.ids.id(),
+            organizationId,
+            nome: produto.nome,
+            unidade: produto.unidade,
+            ativo: true,
+            excluido: false,
+          });
+        }
+        await deps.store.insertPerfil({
           id: deps.ids.id(),
           organizationId,
-          nome,
+          nome: OPERADOR_PERFIL_NOME,
+          permissions: [...OPERADOR_TEMPLATE_PERMISSIONS],
+          template: true,
         });
-      }
-      for (const produto of SEED_PRODUTOS) {
-        await deps.store.insertProduto({
+        await deps.store.insertUser({
           id: deps.ids.id(),
           organizationId,
-          nome: produto.nome,
-          unidade: produto.unidade,
-          ativo: true,
+          email: SEED_DONO_EMAIL,
+          nome: "Dono",
+          isDono: true,
+          disabled: false,
+          perfilId: null,
+          passwordHash: await deps.passwords.hash(SEED_DONO_PASSWORD),
         });
       }
-      await deps.store.insertPerfil({
-        id: deps.ids.id(),
-        organizationId,
-        nome: OPERADOR_PERFIL_NOME,
-        permissions: [...OPERADOR_TEMPLATE_PERMISSIONS],
-        template: true,
-      });
-      await deps.store.insertUser({
-        id: deps.ids.id(),
-        organizationId,
-        email: SEED_DONO_EMAIL,
-        nome: "Dono",
-        isDono: true,
-        disabled: false,
-        perfilId: null,
-        passwordHash: await deps.passwords.hash(SEED_DONO_PASSWORD),
-      });
+      await ensureSeedOperadores();
     },
 
     async entrar(input) {
@@ -396,15 +489,12 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
     },
 
     async resolverSessao(token) {
-      const session = await deps.store.getSession(token);
-      if (!session) return null;
-      if (deps.clock.now().getTime() - session.createdAt > ttl) {
-        await deps.store.deleteSession(token);
-        return null;
-      }
-      const user = await deps.store.getUserById(session.userId);
-      if (!user || user.disabled) return null;
-      return actorFromUser(user);
+      const chrome = await resolveChrome(token);
+      return chrome?.actor ?? null;
+    },
+
+    async abrirChrome(token) {
+      return resolveChrome(token);
     },
 
     async sair(token) {
@@ -414,8 +504,7 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
     async listarLojas(actor) {
       assertOrg(actor);
       const lojas = await deps.store.listLojas(actor.organizationId);
-      if (actor.isDono) return lojas;
-      return lojas.filter((loja) => actor.vinculoLojaIds.includes(loja.id));
+      return lojasVisiveis(actor, lojas);
     },
 
     async criarLoja(actor, input) {
@@ -435,7 +524,9 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
 
     async listarProdutos(actor) {
       assertOrg(actor);
-      return deps.store.listProdutos(actor.organizationId);
+      return (await deps.store.listProdutos(actor.organizationId)).filter(
+        (produto) => !produto.excluido,
+      );
     },
 
     async criarProduto(actor, input) {
@@ -447,7 +538,7 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
       if (!isUnidadeMedida(input.unidade)) {
         throw new ValidationError("Unidade de medida inválida.");
       }
-      // QA-007: Produto desativado guarda histórico, mas não queima o nome.
+      // QA-007 / #40: desativado ou excluído com histórico não queima o nome.
       const existente = await deps.store.findProdutoByName(organizationId, nome);
       if (existente?.ativo) {
         throw new ConflictError("Já existe um Produto com esse nome.");
@@ -458,6 +549,7 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
         nome,
         unidade: input.unidade,
         ativo: true,
+        excluido: false,
       };
       await deps.store.insertProduto(produto);
       return produto;
@@ -466,7 +558,9 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
     async editarProduto(actor, input) {
       requirePermission(actor, "manage_produto");
       const produto = await deps.store.getProduto(input.id);
-      if (!produto || produto.organizationId !== organizationId) throw new ForbiddenError();
+      if (!produto || produto.organizationId !== organizationId || produto.excluido) {
+        throw new ForbiddenError();
+      }
       const nome = normalizeName(input.nome);
       if (!nome) throw new ValidationError("Informe o nome do Produto.");
       // QA-010: maxLength do client é contornável — o servidor enforce o teto.
@@ -485,7 +579,9 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
     async desativarProduto(actor, input) {
       requirePermission(actor, "manage_produto");
       const produto = await deps.store.getProduto(input.id);
-      if (!produto || produto.organizationId !== organizationId) throw new ForbiddenError();
+      if (!produto || produto.organizationId !== organizationId || produto.excluido) {
+        throw new ForbiddenError();
+      }
       await deps.store.updateProduto(produto.id, { ativo: false });
     },
 
@@ -493,8 +589,10 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
       requirePermission(actor, "manage_produto");
       const produto = await deps.store.getProduto(input.id);
       if (!produto || produto.organizationId !== organizationId) throw new ForbiddenError();
+      if (produto.excluido) return;
       if (await deps.store.produtoHasHistory(produto.id)) {
-        throw new ConflictError("Produto com histórico de Fechamento não pode ser excluído.");
+        await deps.store.updateProduto(produto.id, { ativo: false, excluido: true });
+        return;
       }
       await deps.store.deleteProduto(produto.id);
     },
@@ -555,11 +653,20 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
 
     async listarUsuarios(actor) {
       requirePermission(actor, "manage_users");
-      const users = await deps.store.listUsers(organizationId);
+      const [users, vinculos] = await Promise.all([
+        deps.store.listUsers(organizationId),
+        deps.store.listVinculosByOrg(organizationId),
+      ]);
+      const lojaIdsByUser = new Map<string, string[]>();
+      for (const row of vinculos) {
+        const list = lojaIdsByUser.get(row.userId) ?? [];
+        list.push(row.lojaId);
+        lojaIdsByUser.set(row.userId, list);
+      }
       return Promise.all(
         users.map(async (user) => ({
           ...(await publicUser(user)),
-          lojaIds: await deps.store.vinculosOf(user.id),
+          lojaIds: lojaIdsByUser.get(user.id) ?? [],
         })),
       );
     },
@@ -661,9 +768,7 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
     async estoqueDasLojas(actor) {
       requirePermission(actor, "read_estoque");
       const lojas = await deps.store.listLojas(organizationId);
-      const visiveis = actor.isDono
-        ? lojas
-        : lojas.filter((loja) => actor.vinculoLojaIds.includes(loja.id));
+      const visiveis = lojasVisiveis(actor, lojas);
       const colunas = await statusDasLojas(visiveis);
       return colunas.map(({ loja, snap }) => ({
         loja,
@@ -671,6 +776,34 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
         valores: snap.valores,
         exigeJustificativa: snap.exigeJustificativa,
       }));
+    },
+
+    async estadoDaLoja(actor, lojaId) {
+      const loja = await requireLoja(actor, lojaId);
+      requirePermission(actor, "read_estoque");
+      const day = calendarDay(deps.clock);
+      const [todosProdutos, estoqueRows, rascunhoRow, hoje] = await Promise.all([
+        deps.store.listProdutos(organizationId),
+        deps.store.listEstoque(loja.id),
+        deps.store.getRascunho(loja.id, day),
+        deps.store.submissionsOnDay(loja.id, day),
+      ]);
+      const snap = snapFrom(estoqueRows, rascunhoRow, hoje, todosProdutos);
+      const ativos = todosProdutos.filter((produto) => produto.ativo);
+      const map = new Map((rascunhoRow?.linhas ?? []).map((linha) => [linha.produtoId, linha.restante]));
+      return {
+        produtos: todosProdutos.filter((produto) => !produto.excluido),
+        snap: {
+          loja,
+          status: snap.status,
+          valores: snap.valores,
+          exigeJustificativa: snap.exigeJustificativa,
+        },
+        linhas: ativos.map((produto) => ({
+          produtoId: produto.id,
+          restante: map.has(produto.id) ? map.get(produto.id)! : null,
+        })),
+      };
     },
 
     async rascunhoDoDia(actor, lojaId) {
@@ -774,15 +907,40 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
       return historyRows(input.lojaId);
     },
 
+    async enviosDoDia(actor, input) {
+      // ASVS 4.1.1 / 4.2.1: same Loja scope and read_history as historico.
+      await requireLoja(actor, input.lojaId);
+      requirePermission(actor, "read_history");
+      const day = calendarDay(deps.clock);
+      const [submissions, users, produtos] = await Promise.all([
+        deps.store.submissionsOnDay(input.lojaId, day),
+        deps.store.listUsers(organizationId),
+        deps.store.listProdutos(organizationId),
+      ]);
+      const nomes = new Map(users.map((user) => [user.id, user.nome]));
+      const produtoNomes = produtoNomesFrom(produtos);
+      return [...submissions]
+        .sort((a, b) => {
+          if (a.enviadoEm === b.enviadoEm) return 0;
+          return a.enviadoEm < b.enviadoEm ? -1 : 1;
+        })
+        .map((submission) => ({
+          submission,
+          usuarioNome: nomes.get(submission.usuarioId) ?? "Usuário",
+          produtoNomes,
+        }));
+    },
+
     async dashboard(actor) {
       requirePermission(actor, "dashboard");
-      const lojas = await deps.store.listLojas(organizationId);
-      const visiveis = actor.isDono
-        ? lojas
-        : lojas.filter((loja) => actor.vinculoLojaIds.includes(loja.id));
+      const [lojas, produtos] = await Promise.all([
+        deps.store.listLojas(organizationId),
+        deps.store.listProdutos(organizationId),
+      ]);
+      const visiveis = lojasVisiveis(actor, lojas);
       const [colunas, historicoPorLoja] = await Promise.all([
-        statusDasLojas(visiveis),
-        historyByLoja(visiveis),
+        statusDasLojas(visiveis, produtos),
+        historyByLoja(visiveis, produtos),
       ]);
       const estoque: EstoqueView[] = [];
       const semFechamentoHoje: Loja[] = [];
@@ -806,7 +964,7 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
   };
 }
 
-export { actorCan, rotuloStatus } from "./view";
+export { actorCan, homePath, rotuloStatus } from "./view";
 
 export function requireActor(actor: Actor | null): Actor {
   if (!actor) throw new UnauthenticatedError();

@@ -2,30 +2,46 @@
 import { expect, type Page } from "@playwright/test";
 
 export const DONO = { email: "dono@doguinho.local", senha: "coruja" };
-export const OPERADOR_CENTRO = { email: "operador.centro@doguinho.local", senha: "qa123456" };
+export const OPERADOR_CENTRO = { email: "operador.centro@doguinho.local", senha: "coruja" };
+export const OPERADOR_JULIANA = { email: "operador.juliana@doguinho.local", senha: "coruja" };
+export const OPERADOR_MAGALHAES = { email: "operador.magalhaes@doguinho.local", senha: "coruja" };
+export const OPERADOR_MULTI = { email: "operador.multi@doguinho.local", senha: "qa123456" };
 export const RESTRITO = { email: "restrito@doguinho.local", senha: "qa123456" };
+export const SEM_LOJA = { email: "semloja@doguinho.local", senha: "qa123456" };
 
 export async function login(page: Page, email: string, senha: string) {
   await page.goto("/entrar");
   await page.getByLabel("E-mail", { exact: true }).fill(email);
   await page.getByLabel("Senha", { exact: true }).fill(senha);
   await page.getByRole("button", { name: "Entrar" }).click();
-  await page.waitForURL("**/fechamento**");
+  await page.waitForURL(email === DONO.email ? /\/dashboard/ : /\/fechamento/);
 }
 
 export async function loginDono(page: Page) {
   await login(page, DONO.email, DONO.senha);
 }
 
+export async function loginOperador(
+  page: Page,
+  identidade: { email: string; senha: string } = OPERADOR_CENTRO,
+) {
+  await login(page, identidade.email, identidade.senha);
+}
+
 export async function logout(page: Page) {
-  await page.getByRole("button", { name: "Sair" }).click();
+  const sair = page.getByRole("button", { name: "Sair" }).locator("visible=true");
+  if ((await sair.count()) === 0) {
+    await page.getByRole("button", { name: "Abrir menu" }).click();
+    await expect(sair).toBeVisible();
+  }
+  await sair.click();
   await page.waitForURL("**/entrar**");
 }
 
 /** Seleciona uma Loja de seed pelo nome e devolve o id (?loja=). */
 export async function selecionarLoja(page: Page, nome: string): Promise<string> {
   const antes = page.url(); // a URL atual pode já ter ?loja= — esperar MUDANÇA, não o padrão
-  await page.getByRole("combobox").click();
+  await page.getByRole("banner").getByRole("combobox").click();
   // o viewport do seletor tem overflow escondido; typeahead do Radix foca a opção pelo nome
   await page.keyboard.type(nome, { delay: 15 });
   await page.keyboard.press("Enter");
@@ -35,20 +51,37 @@ export async function selecionarLoja(page: Page, nome: string): Promise<string> 
   return id;
 }
 
+/** Seleciona Todas as Lojas no filtro do header (?loja=todas). */
+export async function selecionarTodasAsLojas(page: Page) {
+  const antes = page.url();
+  await page.getByRole("banner").getByRole("combobox").click();
+  await page.keyboard.type("Todas as Lojas", { delay: 15 });
+  await page.keyboard.press("Enter");
+  await page.waitForURL(
+    (url) => url.toString() !== antes && url.searchParams.get("loja") === "todas",
+  );
+}
+
 /** Preenche TODAS as quantidades do formulário de Fechamento, em TODAS as páginas
  *  do pager cliente (8/página — o catálogo cresce entre runs). */
 export async function preencherQuantidades(page: Page, valor: string) {
+  const inputs = page.locator('input[aria-label^="Quantidade restante de"]');
+  await expect(inputs.first()).toBeVisible();
+  const paginacao = page.getByRole("navigation", { name: "Paginação" });
+  await expect(paginacao).toBeVisible();
+
+  async function preencherPagina() {
+    const n = await inputs.count();
+    for (let i = 0; i < n; i++) {
+      await inputs.nth(i).fill(valor);
+      await expect(inputs.nth(i)).toHaveValue(valor);
+    }
+  }
+
   for (;;) {
-    const inputs = page.locator('input[aria-label^="Quantidade restante de"]');
-    for (let i = 0; i < (await inputs.count()); i++) await inputs.nth(i).fill(valor);
-    const paginacao = page.getByRole("navigation", { name: "Paginação" });
-    if (!(await paginacao.count())) break;
-    const atual = await paginacao
-      .locator('button[aria-current="page"]')
-      .innerText()
-      .catch(() => "1");
-    const proxima = paginacao.getByRole("button", { name: String(Number(atual) + 1), exact: true });
-    if (!(await proxima.count())) break;
+    await preencherPagina();
+    const proxima = paginacao.getByRole("button").last();
+    if (await proxima.isDisabled()) break;
     await proxima.click();
   }
 }
@@ -56,15 +89,14 @@ export async function preencherQuantidades(page: Page, valor: string) {
 /** Envia o quadro: Fechamento do dia ou Correção, conforme o botão visível. */
 export async function enviarRestante(page: Page, valor: string) {
   await preencherQuantidades(page, valor);
+  const enviar = page.getByRole("button", { name: /Enviar (fechamento|correção)/ });
+  await expect(enviar).toBeVisible();
   const correcao = page.getByRole("button", { name: "Enviar correção" });
   if (await correcao.count()) {
     const just = page.getByLabel(/Justificativa/i);
-    if (await just.count()) {
-      await just.fill("Contagem refeita após conferência física.");
-    }
-    await correcao.click();
-  } else {
-    await page.getByRole("button", { name: "Enviar fechamento" }).click();
+    await expect(just).toBeVisible();
+    await just.fill("Contagem refeita após conferência física.");
   }
+  await enviar.click();
   await expect(page.locator("body")).toContainText("Enviado. Isso é o Estoque agora.");
 }

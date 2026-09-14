@@ -55,6 +55,7 @@ export type Produto = {
   nome: string;
   unidade: UnidadeMedida;
   ativo: boolean;
+  excluido: boolean;
 };
 
 export type Perfil = {
@@ -114,6 +115,7 @@ export type EstoqueView = {
 export type HistoryRow = {
   submission: Submission;
   usuarioNome: string;
+  produtoNomes: Record<string, string>;
 };
 
 export type Dashboard = {

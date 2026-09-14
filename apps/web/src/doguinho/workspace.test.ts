@@ -13,20 +13,16 @@ async function setup() {
 }
 
 function withCallCounts(app: DoguinhoApp) {
-  const counts = { produtos: 0, estoque: 0, rascunho: 0 };
+  const counts = { produtos: 0, estado: 0 };
   const wrapped: DoguinhoApp = {
     ...app,
     listarProdutos: async (actor) => {
       counts.produtos += 1;
       return app.listarProdutos(actor);
     },
-    estoqueDaLoja: async (actor, lojaId) => {
-      counts.estoque += 1;
-      return app.estoqueDaLoja(actor, lojaId);
-    },
-    rascunhoDoDia: async (actor, lojaId) => {
-      counts.rascunho += 1;
-      return app.rascunhoDoDia(actor, lojaId);
+    estadoDaLoja: async (actor, lojaId) => {
+      counts.estado += 1;
+      return app.estadoDaLoja(actor, lojaId);
     },
   };
   return { app: wrapped, counts };
@@ -40,7 +36,7 @@ describe("assembleWorkspace", () => {
       produtos: false,
       lojaState: false,
     });
-    expect(spy.counts).toEqual({ produtos: 0, estoque: 0, rascunho: 0 });
+    expect(spy.counts).toEqual({ produtos: 0, estado: 0 });
     expect(workspace.produtos).toEqual([]);
     expect(workspace.snap).toBeNull();
     expect(workspace.linhas).toEqual([]);
@@ -56,9 +52,8 @@ describe("assembleWorkspace", () => {
       produtos: true,
       lojaState: true,
     });
-    expect(spy.counts.produtos).toBe(1);
-    expect(spy.counts.estoque).toBe(1);
-    expect(spy.counts.rascunho).toBe(1);
+    expect(spy.counts.produtos).toBe(0);
+    expect(spy.counts.estado).toBe(1);
     expect(workspace.lojaId).toBe(centro.id);
     expect(workspace.filtro).toBe(centro.id);
     expect(workspace.produtos.length).toBeGreaterThan(0);

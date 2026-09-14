@@ -71,6 +71,7 @@ export function createMemoryStore(): Store {
         [...produtos.values()].find(
           (produto) =>
             produto.organizationId === organizationId &&
+            !produto.excluido &&
             normalizeName(produto.nome).toLowerCase() === target,
         ) ?? null
       );
@@ -149,6 +150,15 @@ export function createMemoryStore(): Store {
     async vinculosOf(userId) {
       return vinculos.get(userId) ?? [];
     },
+    async listVinculosByOrg(organizationId) {
+      const rows: Array<{ userId: string; lojaId: string }> = [];
+      for (const [userId, lojaIds] of vinculos) {
+        const user = users.get(userId);
+        if (!user || user.organizationId !== organizationId) continue;
+        for (const lojaId of lojaIds) rows.push({ userId, lojaId });
+      }
+      return rows;
+    },
 
     async upsertRascunho(row) {
       rascunhos.set(rascunhoKey(row.lojaId, row.calendarDay), row);
@@ -204,6 +214,20 @@ export function createMemoryStore(): Store {
     },
     async getSession(token) {
       return sessions.get(token) ?? null;
+    },
+    async getSessionChrome(token) {
+      const session = sessions.get(token);
+      if (!session) return null;
+      const user = users.get(session.userId);
+      if (!user) return null;
+      return {
+        session,
+        user,
+        lojas: [...lojas.values()]
+          .filter((loja) => loja.organizationId === user.organizationId)
+          .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR")),
+        vinculoLojaIds: vinculos.get(user.id) ?? [],
+      };
     },
     async deleteSession(token) {
       sessions.delete(token);

@@ -1,15 +1,16 @@
 // Global setup da suíte E2E: garante as identidades de QA (idempotente).
 // Roda uma vez antes dos testes, contra o dev server (memory store reseedado
 // a cada restart do servidor — por isso a garantia é feita via HTTP/UI).
+// Os três Operadores por Loja (centro/juliana/magalhaes, senha coruja) vêm do seed.
 import { chromium, expect, type Page } from "@playwright/test";
 
 const BASE = process.env.QA_BASE_URL ?? "http://localhost:3000";
 const DONO = { email: "dono@doguinho.local", senha: "coruja" };
 
 const IDENTIDADES = [
-  { email: "operador.centro@doguinho.local", senha: "qa123456", nome: "Operador Centro", perfil: "Operador", lojas: ["Centro"] },
   { email: "operador.multi@doguinho.local", senha: "qa123456", nome: "Operador Multi", perfil: "Operador", lojas: ["Centro", "Jardim Juliana"] },
   { email: "restrito@doguinho.local", senha: "qa123456", nome: "Restrito QA", perfil: "Restrito", lojas: ["Centro"] },
+  { email: "semloja@doguinho.local", senha: "qa123456", nome: "Sem Loja", perfil: "Operador", lojas: [] },
 ];
 
 async function loginDono(page: Page) {
@@ -17,7 +18,7 @@ async function loginDono(page: Page) {
   await page.getByLabel("E-mail", { exact: true }).fill(DONO.email);
   await page.getByLabel("Senha", { exact: true }).fill(DONO.senha);
   await page.getByRole("button", { name: "Entrar" }).click();
-  await page.waitForURL("**/fechamento**");
+  await page.waitForURL("**/dashboard**");
 }
 
 export default async function globalSetup() {

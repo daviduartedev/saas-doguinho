@@ -20,6 +20,10 @@ const text = Red_Hat_Text({
 export const metadata: Metadata = {
   title: "Doguinho do Coruja",
   description: "Fechamento diário da quantidade restante",
+  icons: {
+    icon: [{ url: "/marca-doguinho.png", type: "image/png" }],
+    apple: "/marca-doguinho.png",
+  },
 };
 
 export default function RootLayout({

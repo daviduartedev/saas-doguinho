@@ -1,11 +1,19 @@
 // Autenticação: login, credencial errada, logout, middleware.
 import { expect, test } from "@playwright/test";
-import { DONO, login, loginDono, logout } from "./helpers";
+import {
+  DONO,
+  OPERADOR_CENTRO,
+  OPERADOR_JULIANA,
+  OPERADOR_MAGALHAES,
+  login,
+  loginDono,
+  logout,
+} from "./helpers";
 
 test.describe("Autenticação", () => {
-  test("login com credenciais válidas leva ao Fechamento", async ({ page }) => {
+  test("login do Dono leva ao Dashboard", async ({ page }) => {
     await loginDono(page);
-    await expect(page).toHaveURL(/\/fechamento/);
+    await expect(page).toHaveURL(/\/dashboard/);
     await expect(page.getByRole("navigation").first()).toBeVisible();
   });
 
@@ -31,9 +39,32 @@ test.describe("Autenticação", () => {
     await page.waitForURL("**/entrar**");
   });
 
-  test("usuário logado que visita /entrar é levado ao Fechamento", async ({ page }) => {
+  test("Dono logado que visita /entrar é levado ao Dashboard", async ({ page }) => {
     await loginDono(page);
     await page.goto("/entrar");
+    await page.waitForURL("**/dashboard**");
+  });
+
+  test("Operador logado que visita /entrar é levado ao Fechamento", async ({ page }) => {
+    await login(page, OPERADOR_CENTRO.email, OPERADOR_CENTRO.senha);
+    await page.goto("/entrar");
     await page.waitForURL("**/fechamento**");
+  });
+
+  test("/entrar é só e-mail e senha — sem seletor de Loja", async ({ page }) => {
+    await page.goto("/entrar");
+    await expect(page.getByLabel("E-mail", { exact: true })).toBeVisible();
+    await expect(page.getByLabel("Senha", { exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Entrar" })).toBeVisible();
+    await expect(page.getByRole("combobox")).toHaveCount(0);
+    await expect(page.getByRole("option", { name: "Centro" })).toHaveCount(0);
+  });
+
+  test("cada Operador de seed entra com a senha do Dono", async ({ page }) => {
+    for (const identidade of [OPERADOR_CENTRO, OPERADOR_JULIANA, OPERADOR_MAGALHAES]) {
+      await login(page, identidade.email, identidade.senha);
+      await expect(page).toHaveURL(/\/fechamento/);
+      await logout(page);
+    }
   });
 });

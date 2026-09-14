@@ -74,17 +74,18 @@ describe("Doguinho application", () => {
     expect(ativos.find((produto) => produto.id === pao.id)).toBeUndefined();
   });
 
-  it("refuses to delete a Produto that has Fechamento history", async () => {
+  it("lets the Dono excluir a Produto with Fechamento history without erasing the past", async () => {
     const { app } = await createTestApp();
     const dono = await asDono(app);
     const centro = (await app.listarLojas(dono)).find((loja) => loja.nome === "Centro")!;
     const linhas = await linhasCompletas(app, dono, 1);
     await app.enviar(dono, { lojaId: centro.id, linhas });
     const pao = (await app.listarProdutos(dono)).find((produto) => produto.nome === "Pão")!;
-    await expect(app.excluirProduto(dono, { id: pao.id })).rejects.toBeInstanceOf(ConflictError);
-    await app.desativarProduto(dono, { id: pao.id });
+    await app.excluirProduto(dono, { id: pao.id });
+    expect((await app.listarProdutos(dono)).find((produto) => produto.id === pao.id)).toBeUndefined();
     const historico = await app.historico(dono, { lojaId: centro.id });
     expect(historico[0].submission.linhas.some((linha) => linha.produtoId === pao.id)).toBe(true);
+    expect(historico[0].produtoNomes[pao.id]).toBe("Pão");
   });
 
   it("creates a named Perfil without Lojas on the checklist and keeps create Perfil/Loja Dono-only", async () => {

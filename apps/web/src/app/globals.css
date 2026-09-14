@@ -93,11 +93,40 @@ body {
   min-height: 100svh;
   grid-template-columns: minmax(0, 1fr);
   background: var(--paper);
-  --nav-end: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+  --nav-end: env(safe-area-inset-bottom, 0px);
 }
 
 .app-nav-side {
   display: none;
+}
+
+.app-nav-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin: -0.375rem 0;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ketchup);
+  cursor: pointer;
+}
+
+.app-nav-toggle:hover {
+  background: var(--counter);
+}
+
+.app-nav-toggle:focus-visible {
+  background: var(--counter);
+  outline: 2px solid var(--ketchup);
+  outline-offset: 2px;
+}
+
+.app-nav-toggle:active {
+  transform: scale(0.97);
 }
 
 .app-column {
@@ -107,40 +136,75 @@ body {
   min-height: 100svh;
 }
 
-.app-nav-bottom {
+.app-nav-panel {
   display: flex;
-  overflow-x: auto;
-  border-top: 1px solid var(--border);
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
   background: var(--awning);
   color: #fff;
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.app-nav-panel nav {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.app-nav-dialog {
+  width: 100vw;
+  max-width: none;
+  height: 100svh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.app-nav-dialog::backdrop {
+  background: rgb(36 23 16 / 0.35);
+}
+
+.app-nav-dialog .app-nav-panel {
+  width: var(--sidebar);
+  max-width: 100%;
+}
+
+.app-nav-side-foot {
+  flex-shrink: 0;
+  padding: 0.75rem;
 }
 
 .app-actor {
-  display: none;
+  margin: 0 0 0.5rem;
+  padding: 0 0.75rem;
+  font-size: 15px;
+  color: #fff;
+  opacity: 0.8;
 }
 
 @container app (min-width: 44rem) {
   .app-frame {
     grid-template-columns: var(--sidebar) minmax(0, 1fr);
-    --nav-end: 0px;
   }
 
   .app-nav-side {
     display: flex;
     flex-direction: column;
+    position: sticky;
+    top: 0;
+    height: 100svh;
+    overflow: hidden;
+  }
+
+  .app-nav-toggle {
+    display: none;
   }
 
   .app-column {
     min-height: 100svh;
-  }
-
-  .app-nav-bottom {
-    display: none;
-  }
-
-  .app-actor {
-    display: block;
   }
 }
 

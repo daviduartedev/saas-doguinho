@@ -15,7 +15,9 @@ Open `/entrar`.
 Demo (in-memory, not production auth):
 
 - Dono: `dono@doguinho.local` / `coruja`
-- Operador (Loja Centro): `operador@doguinho.local` / `coruja`
+- Operador Centro: `operador.centro@doguinho.local` / `coruja`
+- Operador Jardim Juliana: `operador.juliana@doguinho.local` / `coruja`
+- Operador Magalhães: `operador.magalhaes@doguinho.local` / `coruja`
 
 `DATABASE_URL` in `.env.example` is reserved for Neon PostgreSQL. This slice keeps domain state in memory.
 

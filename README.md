@@ -15,7 +15,7 @@ npm test
 npm run dev
 ```
 
-Conta semente: `dono@doguinho.local` / `coruja`.
+Conta semente do Dono: `dono@doguinho.local` / `coruja`. Um Operador por Loja (mesma senha): `operador.centro@doguinho.local`, `operador.juliana@doguinho.local`, `operador.magalhaes@doguinho.local`.
 
 Sem `DATABASE_URL`, o app usa persistência em memória (reinicia com o processo). Em produção na Vercel, defina `DATABASE_URL` (Postgres/Neon).
 
