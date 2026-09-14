@@ -41,8 +41,8 @@ export default async function EstoquePage({
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="font-display text-3xl font-bold text-ink">Estoque</h1>
-          <p className="mt-2 max-w-xl text-sm text-steam">
-            Número oficial = quantidade restante do último Fechamento enviado. Rascunho não conta.
+          <p className="mt-3 max-w-xl font-display text-xl font-semibold leading-snug text-ink">
+            O último envio é o número da prateleira.
           </p>
         </div>
         <EstoqueToolbar lojaId={filtro} query={query} podeGerir={podeGerir} />

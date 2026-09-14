@@ -35,9 +35,8 @@ export default async function ProdutosPage({
     <PageCanvas>
         <header>
           <h1 className="font-display text-3xl font-bold text-ink">Produtos</h1>
-          <p className="mt-2 max-w-xl text-sm text-steam">
-            Um catálogo para todas as Lojas. Desativar tira do próximo Fechamento e guarda o histórico.
-            Excluir some do catálogo. O passado permanece no Histórico.
+          <p className="mt-3 max-w-xl font-display text-xl font-semibold leading-snug text-ink">
+            O que entra no Fechamento.
           </p>
         </header>
 

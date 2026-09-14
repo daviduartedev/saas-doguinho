@@ -47,8 +47,8 @@ export default async function HistoricoPage({
     <PageCanvas>
       <header className="mb-6">
         <h1 className="font-display text-3xl font-bold text-ink">Histórico · {lojaNome}</h1>
-        <p className="mt-2 max-w-xl text-sm text-steam">
-          Cada envio permanece. A diferença é o novo menos o anterior, não é um fato à parte.
+        <p className="mt-3 max-w-xl font-display text-xl font-semibold leading-snug text-ink">
+          Cada envio permanece.
         </p>
         <div className="mt-4 max-w-xl">
           <PeriodoFiltro periodo={periodo} pathname="/historico" params={{ loja: filtro }} />

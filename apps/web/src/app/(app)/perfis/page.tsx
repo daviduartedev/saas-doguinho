@@ -31,8 +31,8 @@ export default async function PerfisPage({
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="font-display text-3xl font-bold text-ink">Perfis</h1>
-            <p className="mt-2 max-w-xl text-sm text-steam">
-              Checklist de permissões. Lojas não entram aqui: o alcance de Loja é o Vínculo da pessoa.
+            <p className="mt-3 max-w-xl font-display text-xl font-semibold leading-snug text-ink">
+              O que cada pessoa pode fazer.
             </p>
           </div>
           <Link

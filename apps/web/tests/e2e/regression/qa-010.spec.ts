@@ -7,7 +7,8 @@ test("QA-010: Configurações não oferece Nova Loja além das 3 da Organizaçã
   await loginDono(page);
   await page.goto("/configuracoes");
   await expect(page.locator("form:has(input#nome)")).toHaveCount(0);
-  await expect(page.locator("body")).toContainText("A Organização tem 3 Lojas");
+  await expect(page.getByRole("heading", { name: "Nova Loja" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Lojas" })).toBeVisible();
   await expect(page.locator("body")).not.toContainText("Application error");
 });
 

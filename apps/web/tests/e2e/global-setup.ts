@@ -45,7 +45,8 @@ export default async function globalSetup() {
       await form.getByLabel("Nome", { exact: true }).fill(u.nome);
       await form.getByLabel("E-mail", { exact: true }).fill(u.email);
       await form.getByLabel("Senha inicial", { exact: true }).fill(u.senha);
-      await form.locator('select[name="perfilId"]').selectOption({ label: u.perfil });
+      await form.getByLabel("Perfil").click();
+      await page.getByRole("option", { name: u.perfil, exact: true }).click();
       for (const loja of u.lojas) await form.getByLabel(loja, { exact: true }).check();
       await form.getByRole("button", { name: "Criar usuário" }).click();
       // bcrypt ~1s: espera web-first em vez de networkidle
