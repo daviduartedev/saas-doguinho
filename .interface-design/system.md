@@ -49,7 +49,7 @@ Red Hat Display (wordmark, titles) + Red Hat Text (UI). Ratio ~1.25 from 15px bo
 
 ## Density
 
-4px grid. Mobile Fechamento rows ~48px hit area (`min-height: 3rem` on stacked listing cells). Desktop table compact. Sidebar 272px, shown when the app shell container is at least 44rem; below that the awning becomes the bottom strip (not a viewport `md:` page). Page gutter `clamp(1.5rem, 4vw, 3rem)`, shared by header and canvas. Content is left-aligned to that gutter, never a centered mobile column. Listings are full width of the main column and use container queries: stacked cards when the listing is narrow, row layout when it fits. KPI cards `auto-fit` with `minmax(min(16rem, 100%), 1fr)` so they wrap instead of overlapping. Below 44rem, Dashboard KPI numerals use `--ketchup`; desktop stays `--ink`. Cell pad 20px / 14px (`--listing-px` / `--listing-py`).
+4px grid. Mobile Fechamento rows ~48px hit area (`min-height: 3rem` on stacked listing cells). Desktop table compact. Sidebar 272px, shown when the app shell container is at least 44rem; below that the awning becomes the bottom strip (not a viewport `md:` page). Page gutter `clamp(1.5rem, 4vw, 3rem)`, shared by header and canvas. Content is left-aligned to that gutter, never a centered mobile column. Listings are full width of the main column and use container queries: stacked cards when the listing is narrow, row layout when it fits. KPI cards `auto-fit` with `minmax(min(16rem, 100%), 1fr)` so they wrap instead of overlapping. Below 44rem, Dashboard KPI numerals use `--ketchup`; desktop stays `--ink`. Cell pad 20px / 14px (`--listing-px` / `--listing-py`). Produtos mobile is a two-step sheet; desktop stays the listing form.
 
 Loading: skeleton bones for page content only. The awning nav stays mounted in the `(app)` layout and is never replaced by a skeleton.
 
@@ -63,6 +63,7 @@ Loading: skeleton bones for page content only. The awning nav stays mounted in t
 - Status chip: solid ketchup/mustard/counter, not translucent
 - Loading: skeleton bones for page content only. Nav chrome is the live awning, never skeleton.
 - Listing table: ketchup thead, mustard status chip under a Loja only for rascunho/enviado/correção, sheet rows, blank empty cells. Toolbar: search + Adicionar produto. Footer: “Mostrando X a Y de Z” + page size + Mantine Pagination (active page is a ketchup disc).
+- Produtos: desktop (>= 44rem) keeps the inline create form and listing row fields. Below 44rem, cadastro and edição open a two-step full-screen sheet (nome, then unidade chips). Not a Fechamento stepper. Selected chip is ketchup filled.
 - Dashboard: four KPI cards + shadcn/recharts area chart. KPI numerals ketchup below 44rem, ink on desktop; card surface stays `--sheet`. Header Loja filter only (Todas as Lojas or one Loja). Configurações lists the three Lojas. Nova Loja appears there only while the Organização is under that cap, never on the Dashboard. No KPI cards on Fechamento or Estoque.
 
 ## Auth screen

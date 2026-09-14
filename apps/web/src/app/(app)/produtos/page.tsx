@@ -1,4 +1,5 @@
 import { Ban, Save, Trash2 } from "lucide-react";
+import { ProdutoFolha } from "@/components/produtos/produto-folha";
 import { PageCanvas } from "@/components/ui/page-canvas";
 import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
 import { Input } from "@/components/ui/input";
@@ -40,6 +41,7 @@ export default async function ProdutosPage({
           </p>
         </header>
 
+        <div className="produtos-desktop-only">
         <form action={criarProdutoAction} className="listing-pad auto-fill-form rounded-lg border border-border bg-sheet">
           <div>
             <Label htmlFor="nome">Nome</Label>
@@ -53,7 +55,18 @@ export default async function ProdutosPage({
             <SubmitButton>Cadastrar</SubmitButton>
           </div>
         </form>
+        </div>
 
+        <ProdutoFolha
+          produtos={listing.items.map((produto) => ({
+            id: produto.id,
+            nome: produto.nome,
+            unidade: produto.unidade,
+            ativo: produto.ativo,
+          }))}
+        />
+
+        <div className="produtos-desktop-only">
         <div className="listing-frame">
           <div className="listing-head listing-head-produtos">
             <div className="listing-cell font-semibold">Produto</div>
@@ -110,6 +123,7 @@ export default async function ProdutosPage({
               </div>
             </form>
           ))}
+        </div>
         </div>
         <Pager
           pathname="/produtos"
