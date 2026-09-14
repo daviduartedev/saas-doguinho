@@ -37,9 +37,9 @@ test.describe("Desktop: catálogo inline", () => {
     await page.goto("/produtos");
     await expect(page.getByRole("heading", { name: "Produtos" })).toBeVisible();
 
-    const catalogo = page.locator("form.listing-row-produtos").first();
-    await expect(catalogo.getByRole("button", { name: "Desativar" })).toBeVisible();
-    await expect(catalogo.getByRole("button", { name: "Excluir" })).toBeVisible();
+    const ativo = page.locator("form.listing-row-produtos").filter({ hasText: "Ativo" }).first();
+    await expect(ativo.getByRole("button", { name: "Desativar" })).toBeVisible();
+    await expect(ativo.getByRole("button", { name: "Excluir" })).toBeVisible();
 
     const nome = `Excluir QA ${Date.now()}`;
     await page.locator("input#nome").fill(nome);

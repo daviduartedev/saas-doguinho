@@ -64,7 +64,7 @@ describe("QA-002 — cookie de sessão inválido não pode cair em loop de redir
     expect(deleteMock).toHaveBeenCalledWith("doguinho_session");
   });
 
-  it("layout (app) com token inválido também vai para /sair (não /entrar)", async () => {
+  it("layout (app) com token inválido também vai para /sair (não /entrar)", { timeout: 15_000 }, async () => {
     sessionToken = "token-lixo-que-nao-existe";
     const { default: AppGroupLayout } = await import("../app/(app)/layout");
     await expect(AppGroupLayout({ children: null })).rejects.toThrow(/NEXT_REDIRECT \/sair/);

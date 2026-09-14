@@ -64,46 +64,5 @@ export const doguinhoTheme = createTheme({
         size: "sm",
       },
     },
-    DatePickerInput: {
-      defaultProps: {
-        color: "ketchup",
-        radius: "md",
-      },
-      styles: {
-        label: {
-          color: "var(--steam)",
-          fontSize: "12px",
-          fontWeight: 500,
-          marginBottom: "4px",
-        },
-        input: {
-          backgroundColor: "var(--control)",
-          borderColor: "var(--border)",
-          color: "var(--ink)",
-          fontSize: "14px",
-          minHeight: "36px",
-          height: "36px",
-        },
-      },
-    },
-    Calendar: {
-      styles: {
-        calendarHeader: {
-          color: "var(--ink)",
-        },
-        calendarHeaderControl: {
-          color: "var(--ink)",
-        },
-        weekday: {
-          color: "var(--steam)",
-        },
-        day: {
-          color: "var(--ink)",
-        },
-        month: {
-          backgroundColor: "var(--sheet)",
-        },
-      },
-    },
   },
 });

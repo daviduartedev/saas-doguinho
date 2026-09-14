@@ -1,10 +1,9 @@
 "use client";
 
-import { DatePickerInput } from "@mantine/dates";
-import dayjs from "dayjs";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import type { Periodo, PeriodoPreset } from "@/doguinho/periodo";
+import { DateField } from "@/components/ui/date-field";
 
 const PRESETS: Array<{ preset: PeriodoPreset; label: string }> = [
   { preset: "hoje", label: "Hoje" },
@@ -97,25 +96,15 @@ export function PeriodoFiltro({
       </div>
       {periodo.preset === "custom" ? (
         <div className="flex flex-wrap items-end gap-3">
-          <DatePickerInput
+          <DateField
             label="De"
-            value={periodo.from ? dayjs(periodo.from, "YYYY-MM-DD").toDate() : null}
-            onChange={(date) => {
-              if (date) escolherCustom(dayjs(date).format("YYYY-MM-DD"), periodo.to);
-            }}
-            valueFormat="YYYY-MM-DD"
-            size="sm"
-            className="w-auto"
+            value={periodo.from}
+            onChange={(de) => escolherCustom(de, periodo.to)}
           />
-          <DatePickerInput
+          <DateField
             label="Até"
-            value={periodo.to ? dayjs(periodo.to, "YYYY-MM-DD").toDate() : null}
-            onChange={(date) => {
-              if (date) escolherCustom(periodo.from, dayjs(date).format("YYYY-MM-DD"));
-            }}
-            valueFormat="YYYY-MM-DD"
-            size="sm"
-            className="w-auto"
+            value={periodo.to}
+            onChange={(ate) => escolherCustom(periodo.from, ate)}
           />
         </div>
       ) : null}

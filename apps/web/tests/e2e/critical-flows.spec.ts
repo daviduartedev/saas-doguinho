@@ -40,7 +40,7 @@ test.describe("Fluxos críticos", () => {
 
     await just.fill("Contagem refeita após conferência física.");
     await page.getByRole("button", { name: "Enviar correção" }).click();
-    await expect(page.locator("body")).toContainText("Enviado. Isso é o Estoque agora.");
+    await expect(page.locator("body")).toContainText("Correção enviada. O registro anterior permanece.");
 
     await page.goto("/historico");
     await expect(page.getByRole("heading", { name: /Histórico/ })).toBeVisible();
@@ -53,11 +53,21 @@ test.describe("Fluxos críticos", () => {
   test("Rascunho guardado sobrevive a reload", async ({ page }) => {
     await loginOperador(page, OPERADOR_MAGALHAES);
     const primeiro = page.locator('input[aria-label^="Quantidade restante de"]').first();
+    const rotulo = await primeiro.getAttribute("aria-label");
+    if (!rotulo) throw new Error("input de quantidade sem aria-label");
     await primeiro.fill("42");
-    await page.getByRole("button", { name: "Guardar rascunho" }).click();
-    await expect(page.locator("p.text-ketchup")).toHaveCount(0);
+    await expect(primeiro).toHaveValue("42");
+    const guardar = page.getByRole("button", { name: "Guardar rascunho" });
+    const salvo = page.waitForResponse(
+      (res) => res.request().method() === "POST" && Boolean(res.request().headers()["next-action"]),
+    );
+    await guardar.click();
+    await salvo;
+    await expect(guardar).toBeEnabled();
+    await expect(page.getByText("Não foi possível guardar o Rascunho")).toHaveCount(0);
 
     await page.reload();
-    await expect(page.locator('input[aria-label^="Quantidade restante de"]').first()).toHaveValue("42");
+    await expect(page.getByLabel(rotulo)).toHaveValue("42");
+    await expect(page.getByText("Rascunho na Loja. Ainda não é Estoque.")).toBeVisible();
   });
 });

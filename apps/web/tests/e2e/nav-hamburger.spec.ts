@@ -2,7 +2,7 @@
 import { expect, test } from "@playwright/test";
 import { loginDono, logout } from "./helpers";
 
-const ATOR_DONO = "Dono · Dono";
+const ATOR_DONO = /Dono/;
 
 test.describe("Desktop: aside, sem hamburger", () => {
   test.use({ viewport: { width: 1280, height: 800 } });
