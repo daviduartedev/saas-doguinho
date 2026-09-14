@@ -82,7 +82,7 @@ export function DashboardPanel({
               {kpi.trend !== null ? <TrendBadge value={kpi.trend} /> : null}
             </CardHeader>
             <CardContent>
-              <p className="font-display text-3xl font-bold tabular text-ink">{kpi.value}</p>
+              <p className="kpi-value font-display text-3xl font-bold tabular text-ink">{kpi.value}</p>
             </CardContent>
             <CardFooter className="flex flex-col items-start gap-1">
               <p className="font-medium text-ink">{kpi.lead}</p>
