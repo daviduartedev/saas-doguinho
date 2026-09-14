@@ -81,6 +81,7 @@ export function PeriodoFiltro({
           <button
             key={item.preset}
             type="button"
+            aria-pressed={periodo.preset === item.preset}
             onClick={() => escolherPreset(item.preset)}
             className={cn(
               "h-9 px-3 text-xs font-semibold",

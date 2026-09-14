@@ -270,12 +270,14 @@ function subheadSecao(secao: PdfSecao): string {
 
 const PDF_PAGE_HEIGHT = 792;
 const PDF_HEADER_TOP = 742;
-const PDF_CONTENT_TOP = 688;
+const PDF_SUBHEAD_Y = 725;
+const PDF_AFTER_SUBHEAD = 20;
 const PDF_FOOTER_Y = 30;
 const PDF_LINE_HEIGHT = 14;
 const PDF_COL_PRODUTO = 50;
 const PDF_COL_UNIDADE = 220;
 const PDF_COL_QUANTIDADE = 360;
+const PDF_CABECALHO_SECAO = PDF_AFTER_SUBHEAD + PDF_LINE_HEIGHT;
 
 function pdfTextoAbsoluto(x: number, y: number, tamanho: number, texto: string): string {
   return `BT\n/F1 ${tamanho} Tf\n1 0 0 1 ${x} ${y} Tm\n(${pdfEscape(texto)}) Tj\nET`;
@@ -314,8 +316,20 @@ function pdfColunasCabecalho(y: number): string {
 
 type PdfPaginaEmConstrucao = { ops: string[]; y: number; subhead: string | null };
 
+function pdfPintarCabecalhoSecao(pagina: PdfPaginaEmConstrucao, subhead: string): void {
+  pagina.ops.push(pdfTextoAbsoluto(50, pagina.y, 12, subhead));
+  pagina.y -= PDF_AFTER_SUBHEAD;
+  pagina.ops.push(pdfColunasCabecalho(pagina.y));
+  pagina.y -= PDF_LINE_HEIGHT;
+}
+
 function pdfNovaPagina(paginas: PdfPaginaEmConstrucao[], subhead: string | null): PdfPaginaEmConstrucao {
-  const pagina: PdfPaginaEmConstrucao = { ops: [pdfBarraCabecalho(), pdfTituloCabecalho()], y: PDF_CONTENT_TOP, subhead };
+  const pagina: PdfPaginaEmConstrucao = {
+    ops: [pdfBarraCabecalho(), pdfTituloCabecalho()],
+    y: PDF_SUBHEAD_Y,
+    subhead,
+  };
+  if (subhead) pdfPintarCabecalhoSecao(pagina, subhead);
   paginas.push(pagina);
   return pagina;
 }
@@ -334,18 +348,24 @@ function pdfGarantirEspaco(
 
 function montarConteudoPdf(secoes: PdfSecao[]): string[] {
   const paginas: PdfPaginaEmConstrucao[] = [];
-  let pagina = pdfNovaPagina(paginas, null);
+  if (secoes.length === 0) {
+    pdfNovaPagina(paginas, null);
+    return paginas.map((item) => item.ops.join("\n"));
+  }
 
-  if (secoes.length === 0) return paginas.map((item) => item.ops.join("\n"));
+  let pagina: PdfPaginaEmConstrucao | null = null;
 
   for (const secao of secoes) {
     const subhead = subheadSecao(secao);
 
-    pagina = pdfGarantirEspaco(paginas, pagina, PDF_LINE_HEIGHT * 3, subhead);
-    pagina.ops.push(pdfTextoAbsoluto(50, 725, 12, subhead));
-    pagina.y = 705;
-    pagina.ops.push(pdfColunasCabecalho(pagina.y));
-    pagina.y -= PDF_LINE_HEIGHT;
+    if (!pagina) {
+      pagina = pdfNovaPagina(paginas, subhead);
+    } else if (pagina.y - PDF_CABECALHO_SECAO < PDF_FOOTER_Y + PDF_LINE_HEIGHT) {
+      pagina = pdfNovaPagina(paginas, subhead);
+    } else {
+      pdfPintarCabecalhoSecao(pagina, subhead);
+      pagina.subhead = subhead;
+    }
 
     for (const produto of secao.produtos) {
       pagina = pdfGarantirEspaco(paginas, pagina, PDF_LINE_HEIGHT, subhead);

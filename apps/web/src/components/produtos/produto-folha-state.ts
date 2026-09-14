@@ -79,3 +79,16 @@ export function folhaRotuloEnviar(modo: FolhaModo): "Cadastrar" | "Salvar" {
 export function folhaIndicador(passo: 1 | 2): string {
   return `${passo} / 2`;
 }
+
+export type FolhaAlvoFoco = "nome" | "unidade" | "banner" | null;
+
+export function folhaAlvoFoco(estado: FolhaEstado): FolhaAlvoFoco {
+  if (!estado.aberto) return null;
+  if (estado.banner) return "banner";
+  if (estado.passo === 2) return "unidade";
+  return "nome";
+}
+
+export function folhaDeveAbortarNoDesktop(matchesMobile: boolean, aberto: boolean): boolean {
+  return aberto && !matchesMobile;
+}

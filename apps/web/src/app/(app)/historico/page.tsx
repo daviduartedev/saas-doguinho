@@ -1,4 +1,5 @@
 import { EnviosLista } from "@/components/historico/envios-lista";
+import { historicoMensagemVazia } from "@/components/historico/historico-vazio";
 import { PageCanvas } from "@/components/ui/page-canvas";
 import { Pager } from "@/components/ui/pager";
 import { PeriodoFiltro } from "@/components/ui/periodo-filtro";
@@ -55,7 +56,7 @@ export default async function HistoricoPage({
       </header>
 
       {pagina.total === 0 ? (
-        <p className="text-sm text-steam">Nenhum Fechamento nesta Loja.</p>
+        <p className="text-sm text-steam">{historicoMensagemVazia(Boolean(lojaId))}</p>
       ) : (
         <EnviosLista rows={pagina.items} labelProduto={nomeProduto} />
       )}

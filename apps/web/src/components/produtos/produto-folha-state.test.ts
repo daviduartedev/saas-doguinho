@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   folhaAbrirCriar,
   folhaAbrirEditar,
+  folhaAlvoFoco,
   folhaAposCadastro,
   folhaContinuar,
+  folhaDeveAbortarNoDesktop,
   folhaFechar,
   folhaIndicador,
   folhaPodeContinuar,
@@ -63,5 +65,23 @@ describe("produto folha state", () => {
 
     expect(folhaFechar().aberto).toBe(false);
     expect(folhaFechar().banner).toBeNull();
+  });
+
+  it("aponta o foco para unidade após Continuar e para o banner após cadastro", () => {
+    const criar = folhaAbrirCriar();
+    expect(folhaAlvoFoco(criar)).toBe("nome");
+    expect(folhaAlvoFoco(folhaFechar())).toBeNull();
+
+    const passo2 = folhaContinuar({ ...criar, nome: "Ketchup" });
+    expect(folhaAlvoFoco(passo2)).toBe("unidade");
+
+    const depois = folhaAposCadastro(passo2);
+    expect(folhaAlvoFoco(depois)).toBe("banner");
+  });
+
+  it("aborta a folha quando o viewport deixa de ser mobile", () => {
+    expect(folhaDeveAbortarNoDesktop(true, true)).toBe(false);
+    expect(folhaDeveAbortarNoDesktop(false, true)).toBe(true);
+    expect(folhaDeveAbortarNoDesktop(false, false)).toBe(false);
   });
 });

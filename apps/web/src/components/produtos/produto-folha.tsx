@@ -20,8 +20,10 @@ import { cn } from "@/lib/utils";
 import {
   folhaAbrirCriar,
   folhaAbrirEditar,
+  folhaAlvoFoco,
   folhaAposCadastro,
   folhaContinuar,
+  folhaDeveAbortarNoDesktop,
   folhaFechar,
   folhaIndicador,
   folhaPodeContinuar,
@@ -45,6 +47,8 @@ function mensagemErro(error: unknown): string {
 export function ProdutoFolha({ produtos }: { produtos: ProdutoFolhaItem[] }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const nomeRef = useRef<HTMLInputElement>(null);
+  const unidadeRef = useRef<HTMLParagraphElement>(null);
+  const bannerRef = useRef<HTMLParagraphElement>(null);
   const [estado, setEstado] = useState<FolhaEstado>(folhaFechar);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -55,11 +59,25 @@ export function ProdutoFolha({ produtos }: { produtos: ProdutoFolhaItem[] }) {
     if (!estado.aberto && dialog.open) dialog.close();
   }, [estado.aberto]);
 
+  const alvoFoco = folhaAlvoFoco(estado);
   useEffect(() => {
-    if (estado.aberto && estado.passo === 1) {
-      nomeRef.current?.focus();
+    if (alvoFoco === "nome") nomeRef.current?.focus();
+    if (alvoFoco === "unidade") unidadeRef.current?.focus();
+    if (alvoFoco === "banner") bannerRef.current?.focus();
+  }, [alvoFoco]);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 43.99rem)");
+    function onChange() {
+      if (!folhaDeveAbortarNoDesktop(mq.matches, estado.aberto)) return;
+      setErro(null);
+      setEstado(folhaFechar());
+      dialogRef.current?.close();
     }
-  }, [estado.aberto, estado.passo]);
+    mq.addEventListener("change", onChange);
+    onChange();
+    return () => mq.removeEventListener("change", onChange);
+  }, [estado.aberto]);
 
   function abrirCriar() {
     setErro(null);
@@ -192,7 +210,9 @@ export function ProdutoFolha({ produtos }: { produtos: ProdutoFolhaItem[] }) {
 
             {estado.banner ? (
               <div className="mt-4 rounded-md border border-border bg-paper px-3 py-2">
-                <p role="status">{estado.banner}</p>
+                <p ref={bannerRef} role="status" tabIndex={-1}>
+                  {estado.banner}
+                </p>
                 <Button type="button" variant="counter" className="mt-3" onClick={fechar}>
                   Ver lista
                 </Button>
@@ -236,7 +256,12 @@ export function ProdutoFolha({ produtos }: { produtos: ProdutoFolhaItem[] }) {
                   <input type="hidden" name="nome" value={estado.nome} />
                   <p className="mb-6 font-semibold text-ink">{estado.nome}</p>
                   <div>
-                    <p id="folha-unidade-label" className="text-[15px] font-medium text-steam">
+                    <p
+                      id="folha-unidade-label"
+                      ref={unidadeRef}
+                      tabIndex={-1}
+                      className="text-[15px] font-medium text-steam"
+                    >
                       Unidade
                     </p>
                     <div
