@@ -200,6 +200,8 @@ export function createMemoryStore(): Store {
     async listSubmissionsPage(lojaId, input) {
       const all = submissions
         .filter((row) => row.lojaId === lojaId)
+        .filter((row) => !input.from || row.calendarDay >= input.from)
+        .filter((row) => !input.to || row.calendarDay <= input.to)
         .sort((a, b) => (a.enviadoEm < b.enviadoEm ? 1 : -1));
       return {
         rows: all.slice(input.offset, input.offset + input.limit),

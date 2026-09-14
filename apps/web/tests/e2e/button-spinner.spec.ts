@@ -36,6 +36,10 @@ test("botão pendente do Fechamento mostra spinner, não dots", async ({ page })
   await expect(enviar).toBeVisible();
   await enviar.click();
 
+  const rascunho = page.getByRole("button", { name: "Guardar rascunho" });
+
   await expect(enviar).toHaveAttribute("data-loading", "true");
   await expect.poll(() => tipoLoader(enviar)).toBe("oval");
+  await expect(rascunho).not.toHaveAttribute("data-loading", "true");
+  await expect(rascunho).toBeDisabled();
 });

@@ -209,9 +209,22 @@ export async function createPostgresStore(url: string): Promise<Store> {
       return rows.map(mapSubmission);
     },
     async listSubmissionsPage(lojaId, input) {
+      const { offset, limit, from, to } = input;
+      if (from && to) {
+        const counted = await db()`
+          SELECT COUNT(*)::int AS n FROM submissions
+          WHERE loja_id = ${lojaId} AND calendar_day >= ${from} AND calendar_day <= ${to}
+        `;
+        const rows = await db()`
+          SELECT * FROM submissions
+          WHERE loja_id = ${lojaId} AND calendar_day >= ${from} AND calendar_day <= ${to}
+          ORDER BY enviado_em DESC LIMIT ${limit} OFFSET ${offset}
+        `;
+        return { rows: rows.map(mapSubmission), total: Number(counted[0]?.n ?? 0) };
+      }
       const counted = await db()`SELECT COUNT(*)::int AS n FROM submissions WHERE loja_id = ${lojaId}`;
       const total = Number(counted[0]?.n ?? 0);
-      const rows = await db()`SELECT * FROM submissions WHERE loja_id = ${lojaId} ORDER BY enviado_em DESC LIMIT ${input.limit} OFFSET ${input.offset}`;
+      const rows = await db()`SELECT * FROM submissions WHERE loja_id = ${lojaId} ORDER BY enviado_em DESC LIMIT ${limit} OFFSET ${offset}`;
       return { rows: rows.map(mapSubmission), total };
     },
     async produtoHasHistory(produtoId) {

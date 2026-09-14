@@ -218,7 +218,7 @@ function LojaFiltro({ lojas }: { lojas: Loja[] }) {
     <Select value={lojaId || FILTRO_TODAS} onValueChange={escolherLoja}>
                 <SelectTrigger
                   aria-label="Loja"
-                  className="h-10 w-max max-w-full justify-start gap-3 border-transparent bg-transparent px-2 text-ink data-[state=open]:border-ketchup data-[state=open]:bg-ketchup data-[state=open]:text-white data-[state=open]:[&_svg]:text-white"
+                  className="h-10 w-max max-w-full justify-start gap-4 border-transparent bg-transparent px-3 text-ink data-[state=open]:border-ketchup data-[state=open]:bg-ketchup data-[state=open]:text-white data-[state=open]:[&_svg]:text-white"
                 >
                   <SelectValue />
                 </SelectTrigger>

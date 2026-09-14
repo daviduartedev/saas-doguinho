@@ -2,7 +2,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { loginDono } from "./helpers";
 
-const FOLGA_MIN = 8;
+const FOLGA_MIN = 12;
 
 function triggerLoja(page: Page) {
   // Radix esconde o banner com aria-hidden enquanto o listbox está aberto.

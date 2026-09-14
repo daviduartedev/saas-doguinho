@@ -115,6 +115,58 @@ describe("nomeArquivoFechamento", () => {
   });
 });
 
+function ysDoRotulo(pdf: string, rotulo: string): number[] {
+  const re = new RegExp(`1 0 0 1 \\d+ ([\\d.]+) Tm\\n\\(${rotulo}\\) Tj`, "g");
+  return [...pdf.matchAll(re)].map((match) => Number(match[1]));
+}
+
+describe("montarPdfFechamento", () => {
+  it("pinta cabeçalho ketchup e colunas do listing no PDF", () => {
+    const pdf = montarPdfFechamento(montarPlanilhaFechamento([secao("Centro", 13)])).toString("utf8");
+    expect(pdf).toContain("0.89 0.11 0.14");
+    expect(pdf).toContain("Fechamento");
+    expect(pdf).toContain("Centro");
+    expect(pdf).toContain("Pão");
+  });
+
+  it("não empilha duas Lojas no mesmo Y do subhead", () => {
+    const pdf = montarPdfFechamento(
+      montarPlanilhaFechamento([secao("Centro", 13), secao("Jardim Juliana", 4)]),
+    ).toString("utf8");
+
+    const centro = ysDoRotulo(pdf, "Centro");
+    const jardim = ysDoRotulo(pdf, "Jardim Juliana");
+    expect(centro.length).toBeGreaterThan(0);
+    expect(jardim.length).toBeGreaterThan(0);
+
+    const ambosNoTopo = centro.includes(725) && jardim.includes(725);
+    expect(ambosNoTopo).toBe(false);
+    expect(Math.max(...jardim) < Math.max(...centro) || jardim.some((y) => y !== 725)).toBe(true);
+  });
+
+  it("repete ketchup e o subhead da Loja quando a seção vira página", () => {
+    const produtos = Array.from({ length: 55 }, (_, index) => ({
+      id: `p${index}`,
+      nome: `Item ${index}`,
+      unidade: "kg",
+      ativo: true,
+    }));
+    const pdf = montarPdfFechamento(
+      montarPlanilhaFechamento([
+        {
+          lojaNome: "Centro",
+          produtos,
+          linhas: produtos.map((item) => ({ produtoId: item.id, restante: 1 })),
+          envios: [],
+        },
+      ]),
+    ).toString("utf8");
+
+    expect((pdf.match(/0\.89 0\.11 0\.14 rg/g) ?? []).length).toBeGreaterThanOrEqual(2);
+    expect(ysDoRotulo(pdf, "Centro").filter((y) => y === 725).length).toBeGreaterThanOrEqual(2);
+  });
+});
+
 describe("arquivos gerados", () => {
   it("grava os nomes das Lojas em texto no Excel e no PDF", () => {
     const rows = montarPlanilhaFechamento([

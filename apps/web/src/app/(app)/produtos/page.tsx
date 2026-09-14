@@ -1,7 +1,11 @@
+import { Ban, Save, Trash2 } from "lucide-react";
+import { ProdutoFolha } from "@/components/produtos/produto-folha";
 import { PageCanvas } from "@/components/ui/page-canvas";
+import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { UnidadeSelect } from "@/components/ui/unidade-select";
 import {
   criarProdutoAction,
   desativarProdutoAction,
@@ -9,7 +13,6 @@ import {
   excluirProdutoAction,
 } from "@/doguinho/admin-actions";
 import { actorCan } from "@/doguinho/view";
-import { UNIDADES } from "@/doguinho/types";
 import { loadWorkspace } from "@/doguinho/workspace";
 import { Pager } from "@/components/ui/pager";
 import { paginate } from "@/lib/pagination";
@@ -38,6 +41,7 @@ export default async function ProdutosPage({
           </p>
         </header>
 
+        <div className="produtos-desktop-only">
         <form action={criarProdutoAction} className="listing-pad auto-fill-form rounded-lg border border-border bg-sheet">
           <div>
             <Label htmlFor="nome">Nome</Label>
@@ -45,23 +49,24 @@ export default async function ProdutosPage({
           </div>
           <div>
             <Label htmlFor="unidade">Unidade</Label>
-            <select
-              id="unidade"
-              name="unidade"
-              className="mt-1 h-11 w-full rounded-md border border-border bg-[var(--control)] px-3 text-sm"
-            >
-              {UNIDADES.map((unidade) => (
-                <option key={unidade} value={unidade}>
-                  {unidade}
-                </option>
-              ))}
-            </select>
+            <UnidadeSelect id="unidade" name="unidade" className="mt-1" />
           </div>
           <div className="flex items-end">
             <SubmitButton>Cadastrar</SubmitButton>
           </div>
         </form>
+        </div>
 
+        <ProdutoFolha
+          produtos={listing.items.map((produto) => ({
+            id: produto.id,
+            nome: produto.nome,
+            unidade: produto.unidade,
+            ativo: produto.ativo,
+          }))}
+        />
+
+        <div className="produtos-desktop-only">
         <div className="listing-frame">
           <div className="listing-head listing-head-produtos">
             <div className="listing-cell font-semibold">Produto</div>
@@ -86,35 +91,39 @@ export default async function ProdutosPage({
                 <Label htmlFor={`unidade-${produto.id}`} className="sr-only">
                   Unidade
                 </Label>
-                <select
+                <UnidadeSelect
                   id={`unidade-${produto.id}`}
                   name="unidade"
                   defaultValue={produto.unidade}
-                  className="h-11 w-full rounded-md border border-border bg-[var(--control)] px-3 text-sm"
-                >
-                  {UNIDADES.map((unidade) => (
-                    <option key={unidade} value={unidade}>
-                      {unidade}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
               <div className="listing-cell text-sm text-steam" data-label="Status">{produto.ativo ? "Ativo" : "Desativado"}</div>
               <div className="listing-cell flex flex-wrap items-center justify-end gap-2">
-                <SubmitButton variant="outline" size="sm">
-                  Salvar
+                <SubmitButton variant="primary" size="icon" aria-label="Salvar">
+                  <Save className="h-4 w-4" aria-hidden />
                 </SubmitButton>
                 {produto.ativo ? (
-                  <SubmitButton formAction={desativarProdutoAction} variant="ghost" size="sm">
-                    Desativar
+                  <SubmitButton
+                    formAction={desativarProdutoAction}
+                    variant="counter"
+                    size="icon"
+                    aria-label="Desativar"
+                  >
+                    <Ban className="h-4 w-4" aria-hidden />
                   </SubmitButton>
                 ) : null}
-                <SubmitButton formAction={excluirProdutoAction} variant="ghost" size="sm">
-                  Excluir
-                </SubmitButton>
+                <ConfirmSubmitButton
+                  formAction={excluirProdutoAction}
+                  variant="danger"
+                  size="icon"
+                  aria-label="Excluir"
+                >
+                  <Trash2 className="h-4 w-4" aria-hidden />
+                </ConfirmSubmitButton>
               </div>
             </form>
           ))}
+        </div>
         </div>
         <Pager
           pathname="/produtos"

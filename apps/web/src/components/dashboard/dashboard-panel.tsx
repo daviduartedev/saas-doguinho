@@ -1,27 +1,29 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { TrendingDown, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { cn } from "@/lib/utils";
+import { PeriodoFiltro } from "@/components/ui/periodo-filtro";
+import { periodoRecorteLabel, sliceSeries, type Periodo } from "@/doguinho/periodo";
 import type { DashboardModel, DayPoint } from "./model";
-
-const PERIODS = [
-  { days: 7, label: "7 dias" },
-  { days: 14, label: "14 dias" },
-  { days: 30, label: "30 dias" },
-] as const;
 
 const chartConfig = {
   entradas: { label: "Entradas", color: "var(--mustard)" },
   saidas: { label: "Saídas", color: "var(--ketchup)" },
 };
 
-export function DashboardPanel({ model }: { model: DashboardModel }) {
-  const [days, setDays] = useState<(typeof PERIODS)[number]["days"]>(14);
-  const series = useMemo(() => model.series.slice(-days), [model.series, days]);
+export function DashboardPanel({
+  model,
+  periodo,
+  queryParams,
+}: {
+  model: DashboardModel;
+  periodo: Periodo;
+  queryParams: Record<string, string | undefined>;
+}) {
+  const series = useMemo(() => sliceSeries(model.series, periodo), [model.series, periodo]);
   const entradas = series.reduce((sum, point) => sum + point.entradas, 0);
   const saidas = series.reduce((sum, point) => sum + point.saidas, 0);
   const liquido = entradas - saidas;
@@ -80,7 +82,7 @@ export function DashboardPanel({ model }: { model: DashboardModel }) {
               {kpi.trend !== null ? <TrendBadge value={kpi.trend} /> : null}
             </CardHeader>
             <CardContent>
-              <p className="font-display text-3xl font-bold tabular text-ink">{kpi.value}</p>
+              <p className="kpi-value font-display text-3xl font-bold tabular text-ink">{kpi.value}</p>
             </CardContent>
             <CardFooter className="flex flex-col items-start gap-1">
               <p className="font-medium text-ink">{kpi.lead}</p>
@@ -94,23 +96,9 @@ export function DashboardPanel({ model }: { model: DashboardModel }) {
         <CardHeader className="flex-col items-stretch gap-3">
           <div>
             <h2 className="font-display text-lg font-bold text-ink">Entradas e saídas</h2>
-            <p className="mt-1 text-sm text-steam">Total no recorte de {days} dias</p>
+            <p className="mt-1 text-sm text-steam">{periodoRecorteLabel(periodo)}</p>
           </div>
-          <div className="flex flex-wrap overflow-hidden rounded-md border border-border">
-            {PERIODS.map((period) => (
-              <button
-                key={period.days}
-                type="button"
-                onClick={() => setDays(period.days)}
-                className={cn(
-                  "h-9 px-3 text-xs font-semibold",
-                  days === period.days ? "bg-ink text-white" : "bg-sheet text-steam hover:text-ink",
-                )}
-              >
-                {period.label}
-              </button>
-            ))}
-          </div>
+          <PeriodoFiltro periodo={periodo} pathname="/dashboard" params={queryParams} />
         </CardHeader>
         <CardContent className="min-w-0 pt-4">
           <ChartContainer config={chartConfig} className="h-[280px] w-full min-w-0">
