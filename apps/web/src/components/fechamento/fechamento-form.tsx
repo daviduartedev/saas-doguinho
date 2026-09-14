@@ -2,6 +2,13 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { enviarFechamentoAction, salvarRascunhoAction } from "@/doguinho/fechamento-actions";
+import {
+  avisoEnvio,
+  ctaDesabilitado,
+  ctaMostraSpinner,
+  ctaOpaco,
+  type FechamentoCta,
+} from "@/doguinho/fechamento-cta";
 import type { FechamentoStatus, Produto, QuantidadeLinha, UnidadeMedida } from "@/doguinho/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,11 +44,22 @@ export function FechamentoForm({
   const safePage = Math.min(page, totalPages);
   const pageItems = ativos.slice((safePage - 1) * LISTING_PAGE_SIZE, safePage * LISTING_PAGE_SIZE);
   const [justificativa, setJustificativa] = useState("");
-  const [erro, setErro] = useState<string | null>(null);
-  const [ok, setOk] = useState(false);
-  const [pending, start] = useTransition();
+  const [erroRascunho, setErroRascunho] = useState<string | null>(null);
+  const [envioAvisoInput, setEnvioAvisoInput] = useState<{
+    ok: boolean;
+    erro: string | null;
+    correcao: boolean;
+  } | null>(null);
+  const [ativo, setAtivo] = useState<FechamentoCta | null>(null);
+  const [, start] = useTransition();
   const precisaCorrecao = exigeJustificativa;
   const skipAutosave = useRef(true);
+
+  useEffect(() => {
+    if (envioAvisoInput?.ok) {
+      setEnvioAvisoInput(null);
+    }
+  }, [linhas, justificativa]);
 
   useEffect(() => {
     if (!podeEnviar) return; // somente-leitura: sem auto-save (QA-003)
@@ -150,8 +168,27 @@ export function FechamentoForm({
         </div>
       ) : null}
 
-      {erro ? <p className="mt-3 text-sm font-medium text-ketchup">{erro}</p> : null}
-      {ok ? <p className="mt-3 text-sm font-medium text-ink">Enviado. Isso é o Estoque agora.</p> : null}
+      {erroRascunho ? (
+        <p className="mt-3 rounded-md bg-ketchup px-3 py-2 text-sm font-medium text-white">
+          {erroRascunho}
+        </p>
+      ) : null}
+      {(() => {
+        const aviso = envioAvisoInput ? avisoEnvio(envioAvisoInput) : null;
+        if (!aviso) return null;
+        if (aviso.kind === "erro") {
+          return (
+            <p className="mt-3 rounded-md bg-ketchup px-3 py-2 text-sm font-medium text-white">
+              {aviso.text}
+            </p>
+          );
+        }
+        return (
+          <p className="mt-3 rounded-md border border-mustard bg-sheet px-3 py-2 text-sm font-medium text-ink">
+            {aviso.text}
+          </p>
+        );
+      })()}
 
       {podeEnviar ? (
         <div className="sticky bottom-[var(--nav-end)] mt-5 flex flex-wrap justify-end gap-2 bg-paper py-3">
@@ -159,39 +196,59 @@ export function FechamentoForm({
             type="button"
             variant="outline"
             size="sm"
-            pending={pending}
-            disabled={pending || ativos.length === 0}
-            onClick={() =>
+            pending={ctaMostraSpinner(ativo, "rascunho")}
+            disabled={ctaDesabilitado(ativo, ativos.length === 0)}
+            className={ctaOpaco(ativo, "rascunho") ? "opacity-50" : undefined}
+            onClick={() => {
+              setAtivo("rascunho");
               start(async () => {
                 try {
                   await salvarRascunhoAction(payload());
+                  setErroRascunho(null);
                 } catch {
-                  setErro("Não foi possível guardar o Rascunho. Verifique sua conexão e tente novamente.");
-                  setOk(false);
+                  setErroRascunho(
+                    "Não foi possível guardar o Rascunho. Verifique sua conexão e tente novamente.",
+                  );
+                  setEnvioAvisoInput(null);
+                } finally {
+                  setAtivo(null);
                 }
-              })
-            }
+              });
+            }}
           >
             Guardar rascunho
           </Button>
           <Button
             type="button"
             size="sm"
-            pending={pending}
-            disabled={pending || ativos.length === 0}
-            onClick={() =>
+            pending={ctaMostraSpinner(ativo, "enviar")}
+            disabled={ctaDesabilitado(ativo, ativos.length === 0)}
+            className={ctaOpaco(ativo, "enviar") ? "opacity-50" : undefined}
+            onClick={() => {
+              setAtivo("enviar");
               start(async () => {
                 try {
                   const result = await enviarFechamentoAction(payload());
-                  setErro(result.ok ? null : result.erro);
-                  setOk(result.ok);
+                  setEnvioAvisoInput({
+                    ok: result.ok,
+                    erro: result.ok ? null : result.erro,
+                    correcao: precisaCorrecao,
+                  });
+                  if (result.ok) {
+                    setErroRascunho(null);
+                  }
                 } catch {
                   // rede caiu ou sessão expirou no meio do envio (middleware redireciona o POST) — QA-005/QA-006
-                  setErro("Não foi possível enviar. Verifique sua conexão; se persistir, entre novamente.");
-                  setOk(false);
+                  setEnvioAvisoInput({
+                    ok: false,
+                    erro: "Não foi possível enviar. Verifique sua conexão; se persistir, entre novamente.",
+                    correcao: precisaCorrecao,
+                  });
+                } finally {
+                  setAtivo(null);
                 }
-              })
-            }
+              });
+            }}
           >
             {precisaCorrecao ? "Enviar correção" : "Enviar fechamento"}
           </Button>
