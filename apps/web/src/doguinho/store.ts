@@ -98,7 +98,7 @@ export type Store = {
   listSubmissionsOnDayByOrg: (organizationId: string, calendarDay: string) => Promise<Submission[]>;
   listSubmissionsPage: (
     lojaId: string,
-    input: { offset: number; limit: number },
+    input: { offset: number; limit: number; from?: string; to?: string },
   ) => Promise<{ rows: Submission[]; total: number }>;
 
   insertSession: (row: StoredSession) => Promise<void>;

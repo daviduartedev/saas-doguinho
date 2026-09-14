@@ -8,7 +8,7 @@ import {
   ValidationError,
 } from "./errors";
 import type { Actor, QuantidadeLinha } from "./types";
-import { SEED_DONO_EMAIL, SEED_DONO_PASSWORD } from "./seed";
+import { SEED_DONO_EMAIL, SEED_DONO_PASSWORD, SEED_ORGANIZATION_ID } from "./seed";
 
 async function asDono(app: Awaited<ReturnType<typeof createTestApp>>["app"]) {
   return (await app.entrar({ email: SEED_DONO_EMAIL, senha: SEED_DONO_PASSWORD })).actor;
@@ -447,6 +447,58 @@ describe("Doguinho application", () => {
     expect(dash.recentes[0].submission.tipo).toBe("fechamento");
     expect(dash.historicos.length).toBeGreaterThan(0);
     expect(dash).not.toHaveProperty("vendas");
+  });
+
+  it("filters historicoPagina by calendar day range", async () => {
+    const { app, store } = await createTestApp();
+    const dono = await asDono(app);
+    const centro = (await app.listarLojas(dono)).find((loja) => loja.nome === "Centro")!;
+    const produtoId = (await app.listarProdutos(dono))[0]!.id;
+    const base = {
+      organizationId: SEED_ORGANIZATION_ID,
+      lojaId: centro.id,
+      usuarioId: dono.userId,
+      tipo: "fechamento" as const,
+      justificativa: null,
+      linhas: [{ produtoId, anterior: null, nova: 1 }],
+    };
+    await store.insertSubmission({
+      ...base,
+      id: "envio-antigo",
+      calendarDay: "2026-09-01",
+      enviadoEm: "2026-09-01T12:00:00.000Z",
+    });
+    await store.insertSubmission({
+      ...base,
+      id: "envio-meio",
+      calendarDay: "2026-09-10",
+      enviadoEm: "2026-09-10T12:00:00.000Z",
+    });
+    await store.insertSubmission({
+      ...base,
+      id: "envio-recente",
+      calendarDay: "2026-09-15",
+      enviadoEm: "2026-09-15T12:00:00.000Z",
+    });
+
+    const recorte = await app.historicoPagina(dono, {
+      lojaId: centro.id,
+      page: 1,
+      per: 8,
+      from: "2026-09-07",
+      to: "2026-09-13",
+    });
+    expect(recorte.total).toBe(1);
+    expect(recorte.items[0].submission.id).toBe("envio-meio");
+
+    const amplo = await app.historicoPagina(dono, {
+      lojaId: centro.id,
+      page: 1,
+      per: 8,
+      from: "2026-08-01",
+      to: "2026-09-20",
+    });
+    expect(amplo.total).toBe(3);
   });
 
   it("rejects Enviar when the session is gone", async () => {

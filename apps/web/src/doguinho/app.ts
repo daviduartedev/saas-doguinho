@@ -112,7 +112,7 @@ export type DoguinhoApp = {
   historico: (actor: Actor, input: { lojaId: string }) => Promise<HistoryRow[]>;
   historicoPagina: (
     actor: Actor,
-    input: { lojaId: string; page: number; per: number },
+    input: { lojaId: string; page: number; per: number; from?: string; to?: string },
   ) => Promise<HistoricoPagina>;
   enviosDoDia: (actor: Actor, input: { lojaId: string }) => Promise<HistoryRow[]>;
   relatoriosDoDia: (actor: Actor) => Promise<RelatorioLoja[]>;
@@ -928,7 +928,12 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
       const per = Number.isInteger(input.per) && input.per > 0 ? input.per : 8;
       const page = Number.isInteger(input.page) && input.page > 0 ? input.page : 1;
       const [paged, users, produtos] = await Promise.all([
-        deps.store.listSubmissionsPage(input.lojaId, { offset: (page - 1) * per, limit: per }),
+        deps.store.listSubmissionsPage(input.lojaId, {
+          offset: (page - 1) * per,
+          limit: per,
+          from: input.from,
+          to: input.to,
+        }),
         deps.store.listUsers(organizationId),
         deps.store.listProdutos(organizationId),
       ]);
