@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
 import { Red_Hat_Display, Red_Hat_Text } from "next/font/google";
 import { ColorSchemeScript, MantineProvider, mantineHtmlProps } from "@mantine/core";
+import dayjs from "dayjs";
+import "dayjs/locale/pt-br";
 import { doguinhoTheme } from "@/lib/mantine-theme";
 import "@mantine/core/styles.css";
 import "./globals.css";
+
+dayjs.locale("pt-br");
 
 const display = Red_Hat_Display({
   subsets: ["latin"],

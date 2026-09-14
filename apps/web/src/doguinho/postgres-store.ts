@@ -1,7 +1,13 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import postgres from "postgres";
 import { ConflictError } from "./errors";
-import { SEED_LOJAS, SEED_ORGANIZATION_ID } from "./seed";
+import {
+  SEED_DONO_EMAIL,
+  SEED_LOJAS,
+  SEED_OPERADORES,
+  SEED_ORGANIZATION_ID,
+  SEED_PRODUTOS,
+} from "./seed";
 import type { Loja, Perfil, Produto, Submission } from "./types";
 import type { StoredEstoque, StoredRascunho, StoredUser, Store } from "./store";
 import { normalizeEmail, normalizeName } from "./store";
@@ -418,6 +424,12 @@ async function migrate(sql: Sql) {
       created_at BIGINT NOT NULL
     )`;
   await pruneToSeedLojas(sql);
+  await oneShotDemoWipe(sql);
+  await pruneExtraUsers(sql);
+}
+
+function seedKeepEmails(): string[] {
+  return [SEED_DONO_EMAIL, ...SEED_OPERADORES.map((operador) => operador.email)];
 }
 
 /** ASVS 1.2: seed names stay a bound parameter. Extra Lojas (E2E/smoke) are dropped. */
@@ -435,6 +447,65 @@ async function pruneToSeedLojas(sql: Sql) {
   await sql`DELETE FROM submissions WHERE loja_id IN ${sql(ids)}`;
   await sql`DELETE FROM estoque WHERE loja_id IN ${sql(ids)}`;
   await sql`DELETE FROM lojas WHERE id IN ${sql(ids)}`;
+}
+
+/** ASVS 1.2: keep-list emails are bound parameters. Extra org users are dropped each migrate. */
+async function pruneExtraUsers(sql: Sql) {
+  const keep = seedKeepEmails();
+  const extras = await sql`
+    SELECT id FROM users
+    WHERE organization_id = ${SEED_ORGANIZATION_ID}
+      AND email <> ALL(${keep})
+  `;
+  const ids = extras.map((row) => String(row.id));
+  if (ids.length === 0) return;
+  await sql`DELETE FROM vinculos WHERE user_id IN ${sql(ids)}`;
+  await sql`DELETE FROM sessions WHERE user_id IN ${sql(ids)}`;
+  await sql`DELETE FROM users WHERE id IN ${sql(ids)}`;
+}
+
+/**
+ * One-shot operational wipe for demo walkthroughs. After the first run, `demo_limpo`
+ * prevents re-deleting submissions/rascunhos/estoque/sessions on every cold start.
+ * Prune logic is invoked from migrate(); not unit-tested here (postgres tagged templates).
+ * id = 2 also drops extra catalog items and restores the seed cardápio.
+ */
+async function oneShotDemoWipe(sql: Sql) {
+  await sql`CREATE TABLE IF NOT EXISTS demo_limpo (
+    id int PRIMARY KEY,
+    done_at timestamptz
+  )`;
+  const done = await sql`SELECT id FROM demo_limpo WHERE id = 2`;
+  if (done.length > 0) return;
+  await sql`DELETE FROM submissions WHERE organization_id = ${SEED_ORGANIZATION_ID}`;
+  await sql`DELETE FROM rascunhos WHERE organization_id = ${SEED_ORGANIZATION_ID}`;
+  await sql`DELETE FROM estoque WHERE organization_id = ${SEED_ORGANIZATION_ID}`;
+  await sql`DELETE FROM sessions WHERE user_id IN (
+    SELECT id FROM users WHERE organization_id = ${SEED_ORGANIZATION_ID}
+  )`;
+  await pruneExtraProdutos(sql);
+  await sql`INSERT INTO demo_limpo (id, done_at) VALUES (2, now())`;
+}
+
+/** Extra Produtos from QA/smoke go; seed names stay a bound parameter. */
+async function pruneExtraProdutos(sql: Sql) {
+  const keep = SEED_PRODUTOS.map((produto) => produto.nome);
+  const extras = await sql`
+    SELECT id FROM produtos
+    WHERE organization_id = ${SEED_ORGANIZATION_ID}
+      AND nome <> ALL(${keep})
+  `;
+  const ids = extras.map((row) => String(row.id));
+  if (ids.length > 0) {
+    await sql`DELETE FROM estoque WHERE produto_id IN ${sql(ids)}`;
+    await sql`DELETE FROM produtos WHERE id IN ${sql(ids)}`;
+  }
+  await sql`
+    UPDATE produtos
+    SET ativo = true, excluido = false
+    WHERE organization_id = ${SEED_ORGANIZATION_ID}
+      AND nome = ANY(${keep})
+  `;
 }
 
 function mapLoja(row: Record<string, unknown>): Loja {

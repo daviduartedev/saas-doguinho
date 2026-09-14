@@ -14,7 +14,7 @@ test("QA-005: submit offline mostra mensagem de erro (não falha em silêncio)",
   await page.getByRole("button", { name: /Enviar (fechamento|correção)/ }).click();
 
   // bug: "Failed to fetch" sem catch → nenhuma mensagem para o usuário
-  await expect(page.locator("p.text-ketchup").first()).toBeVisible();
+  await expect(page.getByText(/Não foi possível enviar/)).toBeVisible();
 
   await context.setOffline(false);
 });

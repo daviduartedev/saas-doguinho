@@ -10,7 +10,7 @@ test("QA-009: Configurações lista as 3 Lojas e não oferece criar outra", asyn
   await expect(page.locator("body")).not.toContainText("Application error");
   await expect(page.getByRole("button", { name: "Criar Loja" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Nova Loja" })).toHaveCount(0);
-  await expect(page.locator("body")).toContainText("A Organização tem 3 Lojas");
+  await expect(page.getByRole("heading", { name: "Lojas" })).toBeVisible();
   const lista = page.locator("ul.listing-frame");
   await expect(lista).toContainText("Centro");
   await expect(lista).toContainText("Jardim Juliana");

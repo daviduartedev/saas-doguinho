@@ -98,5 +98,7 @@ export async function enviarRestante(page: Page, valor: string) {
     await just.fill("Contagem refeita após conferência física.");
   }
   await enviar.click();
-  await expect(page.locator("body")).toContainText("Enviado. Isso é o Estoque agora.");
+  await expect(page.locator("body")).toContainText(
+    /Enviado\. Isso é o Estoque agora\.|Correção enviada\. O registro anterior permanece\./,
+  );
 }

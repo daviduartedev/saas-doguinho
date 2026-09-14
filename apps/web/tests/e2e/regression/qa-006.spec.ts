@@ -15,6 +15,6 @@ test("QA-006: submit com sessão expirada mostra mensagem (não 'Application err
   await page.getByRole("button", { name: /Enviar (fechamento|correção)/ }).click();
 
   // bug: promise rejeitada sem catch → "Application error" sem mensagem de domínio
-  await expect(page.locator("p.text-ketchup").first()).toBeVisible();
+  await expect(page.getByText(/Não foi possível enviar/)).toBeVisible();
   await expect(page.locator("body")).not.toContainText("Application error");
 });

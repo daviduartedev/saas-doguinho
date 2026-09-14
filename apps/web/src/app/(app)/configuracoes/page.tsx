@@ -23,8 +23,8 @@ export default async function ConfiguracoesPage({
     <PageCanvas>
         <header>
           <h1 className="font-display text-3xl font-bold text-ink">Configurações</h1>
-          <p className="mt-2 max-w-xl text-sm text-steam">
-            As {MAX_LOJAS} Lojas da Organização. Todas usam o mesmo cadastro de Produtos.
+          <p className="mt-3 max-w-xl font-display text-xl font-semibold leading-snug text-ink">
+            Três Lojas. Um cardápio.
           </p>
         </header>
 
@@ -38,11 +38,7 @@ export default async function ConfiguracoesPage({
               <SubmitButton>Criar Loja</SubmitButton>
             </form>
           </section>
-        ) : (
-          <p className="text-sm text-steam">
-            A Organização tem {MAX_LOJAS} Lojas. Não é possível criar outra.
-          </p>
-        )}
+        ) : null}
 
         <section>
           <h2 className="font-display text-lg font-bold">Lojas</h2>

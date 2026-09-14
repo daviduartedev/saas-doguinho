@@ -6,7 +6,7 @@ import { PeriodoFiltro } from "@/components/ui/periodo-filtro";
 import { calendarDay, saoPauloClock } from "@/doguinho/clock";
 import { parsePeriodo, periodoQueryParams } from "@/doguinho/periodo";
 import { loadWorkspace } from "@/doguinho/workspace";
-import { LISTING_PAGE_SIZE, parseListingPage } from "@/lib/pagination";
+import { HISTORICO_PAGE_SIZE, parseListingPage } from "@/lib/pagination";
 
 export const dynamic = "force-dynamic";
 
@@ -30,12 +30,12 @@ export default async function HistoricoPage({
     ? await app.historicoPagina(actor, {
         lojaId,
         page: parseListingPage(page),
-        per: LISTING_PAGE_SIZE,
+        per: HISTORICO_PAGE_SIZE,
         from: periodo.from,
         to: periodo.to,
       })
     : { items: [], total: 0 };
-  const totalPages = Math.max(1, Math.ceil(pagina.total / LISTING_PAGE_SIZE) || 1);
+  const totalPages = Math.max(1, Math.ceil(pagina.total / HISTORICO_PAGE_SIZE) || 1);
   const lojaNome = lojas.find((item) => item.id === lojaId)?.nome ?? "";
   const nomeProduto = (id: string, nomes: Record<string, string>) => nomes[id] ?? id;
   const pagerParams = {
@@ -47,8 +47,8 @@ export default async function HistoricoPage({
     <PageCanvas>
       <header className="mb-6">
         <h1 className="font-display text-3xl font-bold text-ink">Histórico · {lojaNome}</h1>
-        <p className="mt-2 max-w-xl text-sm text-steam">
-          Cada envio permanece. A diferença é o novo menos o anterior, não é um fato à parte.
+        <p className="mt-3 max-w-xl font-display text-xl font-semibold leading-snug text-ink">
+          Cada envio permanece.
         </p>
         <div className="mt-4 max-w-xl">
           <PeriodoFiltro periodo={periodo} pathname="/historico" params={{ loja: filtro }} />

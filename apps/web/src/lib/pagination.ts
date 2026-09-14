@@ -1,4 +1,5 @@
 export const LISTING_PAGE_SIZE = 8;
+export const HISTORICO_PAGE_SIZE = 5;
 export const LISTING_PAGE_SIZES = [8, 16, 24] as const;
 
 /** ASVS 5.1.1: treat `page` as an untrusted query integer and clamp it. */

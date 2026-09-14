@@ -66,8 +66,8 @@ export function DashboardPanel({
     <div className="space-y-6">
       <header>
         <h1 className="font-display text-3xl font-bold text-ink">Dashboard</h1>
-        <p className="mt-2 max-w-xl text-sm text-steam">
-          Entradas e saídas da prateleira. {model.filtroNome}.
+        <p className="mt-3 max-w-xl font-display text-xl font-semibold leading-snug text-ink">
+          Entradas e saídas da prateleira.
         </p>
         {model.ilustrativo ? (
           <p className="mt-2 text-xs font-medium text-steam">Série ilustrativa. Pouco histórico de Fechamento.</p>
