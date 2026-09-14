@@ -125,6 +125,17 @@ export type Dashboard = {
   historicos: { loja: Loja; rows: HistoryRow[] }[];
 };
 
+export type RelatorioLoja = {
+  loja: Loja;
+  produtos: Produto[];
+  linhas: QuantidadeLinha[];
+};
+
+export type HistoricoPagina = {
+  items: HistoryRow[];
+  total: number;
+};
+
 export type Clock = {
   now: () => Date;
 };

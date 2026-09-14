@@ -36,9 +36,9 @@ describe("leitura em lote do Estoque e Dashboard", () => {
         counts.submissions += 1;
         return raw.listSubmissions(lojaId);
       },
-      listSubmissionsByOrg: async (organizationId) => {
+      listSubmissionsSinceByOrg: async (organizationId, day) => {
         counts.submissionsOrg += 1;
-        return raw.listSubmissionsByOrg(organizationId);
+        return raw.listSubmissionsSinceByOrg(organizationId, day);
       },
       getUserById: async (id) => {
         counts.getUser += 1;
@@ -247,5 +247,104 @@ describe("waterfalls apontados pela medida", () => {
     expect(counts.produtos).toBe(1);
     expect(counts.getLoja).toBe(1);
     expect(counts.rascunho).toBe(1);
+  });
+
+  it("relatoriosDoDia lê Estoque e envios do dia em lote, não por Loja", async () => {
+    const raw = createMemoryStore();
+    const counts = { estoque: 0, estoqueOrg: 0, onDay: 0, onDayOrg: 0 };
+    const store: Store = {
+      ...raw,
+      listEstoque: async (lojaId) => {
+        counts.estoque += 1;
+        return raw.listEstoque(lojaId);
+      },
+      listEstoqueByOrg: async (organizationId) => {
+        counts.estoqueOrg += 1;
+        return raw.listEstoqueByOrg(organizationId);
+      },
+      submissionsOnDay: async (lojaId, day) => {
+        counts.onDay += 1;
+        return raw.submissionsOnDay(lojaId, day);
+      },
+      listSubmissionsOnDayByOrg: async (organizationId, day) => {
+        counts.onDayOrg += 1;
+        return raw.listSubmissionsOnDayByOrg(organizationId, day);
+      },
+    };
+    const app = appWith(store);
+    await app.seed();
+    const session = await app.entrar({ email: "dono@doguinho.local", senha: "coruja" });
+    const dono = await app.resolverSessao(session.token);
+    if (!dono) throw new Error("Dono sem sessão");
+    counts.estoque = 0;
+    counts.estoqueOrg = 0;
+    counts.onDay = 0;
+    counts.onDayOrg = 0;
+
+    const secoes = await app.relatoriosDoDia(dono);
+
+    expect(secoes).toHaveLength(3);
+    expect(counts.estoque).toBe(0);
+    expect(counts.estoqueOrg).toBe(1);
+    expect(counts.onDay).toBe(0);
+    expect(counts.onDayOrg).toBe(1);
+  });
+
+  it("dashboard não lê o histórico inteiro da Organização", async () => {
+    const raw = createMemoryStore();
+    const counts = { all: 0, since: 0 };
+    const store: Store = {
+      ...raw,
+      listSubmissionsByOrg: async (organizationId) => {
+        counts.all += 1;
+        return raw.listSubmissionsByOrg(organizationId);
+      },
+      listSubmissionsSinceByOrg: async (organizationId, day) => {
+        counts.since += 1;
+        return raw.listSubmissionsSinceByOrg(organizationId, day);
+      },
+    };
+    const app = appWith(store);
+    await app.seed();
+    const session = await app.entrar({ email: "dono@doguinho.local", senha: "coruja" });
+    const dono = await app.resolverSessao(session.token);
+    if (!dono) throw new Error("Dono sem sessão");
+    counts.all = 0;
+    counts.since = 0;
+
+    await app.dashboard(dono);
+
+    expect(counts.all).toBe(0);
+    expect(counts.since).toBe(1);
+  });
+
+  it("historicoPagina não materializa todos os envios da Loja", async () => {
+    const raw = createMemoryStore();
+    const counts = { all: 0, page: 0 };
+    const store: Store = {
+      ...raw,
+      listSubmissions: async (lojaId) => {
+        counts.all += 1;
+        return raw.listSubmissions(lojaId);
+      },
+      listSubmissionsPage: async (lojaId, input) => {
+        counts.page += 1;
+        return raw.listSubmissionsPage(lojaId, input);
+      },
+    };
+    const app = appWith(store);
+    await app.seed();
+    const session = await app.entrar({ email: "dono@doguinho.local", senha: "coruja" });
+    const dono = await app.resolverSessao(session.token);
+    if (!dono) throw new Error("Dono sem sessão");
+    const centro = (await app.listarLojas(dono)).find((loja) => loja.nome === "Centro");
+    if (!centro) throw new Error("seed sem Loja Centro");
+    counts.all = 0;
+    counts.page = 0;
+
+    await app.historicoPagina(dono, { lojaId: centro.id, page: 1, per: 8 });
+
+    expect(counts.all).toBe(0);
+    expect(counts.page).toBe(1);
   });
 });

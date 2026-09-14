@@ -2,7 +2,7 @@ import { EnviosLista } from "@/components/historico/envios-lista";
 import { PageCanvas } from "@/components/ui/page-canvas";
 import { Pager } from "@/components/ui/pager";
 import { loadWorkspace } from "@/doguinho/workspace";
-import { paginate } from "@/lib/pagination";
+import { LISTING_PAGE_SIZE, parseListingPage } from "@/lib/pagination";
 
 export const dynamic = "force-dynamic";
 
@@ -12,13 +12,18 @@ export default async function HistoricoPage({
   searchParams: Promise<{ loja?: string; page?: string }>;
 }) {
   const { loja, page } = await searchParams;
-  const workspace = await loadWorkspace(loja, { produtos: true, lojaState: false });
-  const { actor, lojas, lojaId, filtro, app, produtos } = workspace;
-  const historico = lojaId ? await app.historico(actor, { lojaId }) : [];
-  const listing = paginate(historico, page);
+  const workspace = await loadWorkspace(loja, { produtos: false, lojaState: false });
+  const { actor, lojas, lojaId, filtro, app } = workspace;
+  const pagina = lojaId
+    ? await app.historicoPagina(actor, {
+        lojaId,
+        page: parseListingPage(page),
+        per: LISTING_PAGE_SIZE,
+      })
+    : { items: [], total: 0 };
+  const totalPages = Math.max(1, Math.ceil(pagina.total / LISTING_PAGE_SIZE) || 1);
   const lojaNome = lojas.find((item) => item.id === lojaId)?.nome ?? "";
-  const nomeProduto = (id: string, nomes: Record<string, string>) =>
-    nomes[id] ?? produtos.find((produto) => produto.id === id)?.nome ?? id;
+  const nomeProduto = (id: string, nomes: Record<string, string>) => nomes[id] ?? id;
 
   return (
     <PageCanvas>
@@ -29,15 +34,15 @@ export default async function HistoricoPage({
         </p>
       </header>
 
-      {historico.length === 0 ? (
+      {pagina.total === 0 ? (
         <p className="text-sm text-steam">Nenhum Fechamento nesta Loja.</p>
       ) : (
-        <EnviosLista rows={listing.items} labelProduto={nomeProduto} />
+        <EnviosLista rows={pagina.items} labelProduto={nomeProduto} />
       )}
       <Pager
         pathname="/historico"
-        page={listing.page}
-        totalPages={listing.totalPages}
+        page={Math.min(parseListingPage(page), totalPages)}
+        totalPages={totalPages}
         params={{ loja: filtro }}
       />
     </PageCanvas>

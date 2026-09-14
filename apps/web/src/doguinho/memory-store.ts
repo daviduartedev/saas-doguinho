@@ -184,6 +184,11 @@ export function createMemoryStore(): Store {
     async listSubmissionsByOrg(organizationId) {
       return submissions.filter((row) => row.organizationId === organizationId);
     },
+    async listSubmissionsSinceByOrg(organizationId, calendarDay) {
+      return submissions.filter(
+        (row) => row.organizationId === organizationId && row.calendarDay >= calendarDay,
+      );
+    },
     async submissionsOnDay(lojaId, calendarDay) {
       return submissions.filter((row) => row.lojaId === lojaId && row.calendarDay === calendarDay);
     },
@@ -191,6 +196,15 @@ export function createMemoryStore(): Store {
       return submissions.filter(
         (row) => row.organizationId === organizationId && row.calendarDay === calendarDay,
       );
+    },
+    async listSubmissionsPage(lojaId, input) {
+      const all = submissions
+        .filter((row) => row.lojaId === lojaId)
+        .sort((a, b) => (a.enviadoEm < b.enviadoEm ? 1 : -1));
+      return {
+        rows: all.slice(input.offset, input.offset + input.limit),
+        total: all.length,
+      };
     },
     async produtoHasHistory(produtoId) {
       return submissions.some((row) => row.linhas.some((linha) => linha.produtoId === produtoId));

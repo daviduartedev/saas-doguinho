@@ -49,8 +49,9 @@ test.describe("Fechamento do Dono", () => {
 
     await loginDono(page);
     await page.goto("/fechamento");
+    await selecionarLoja(page, "Centro");
 
-    await expect(page.getByRole("heading", { name: "Envios de hoje" }).first()).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Envios de hoje" })).toBeVisible();
     await expect(page.getByText("Fechamento · Operador Centro").first()).toBeVisible();
     await expect(page.getByText("Correção · Operador Centro").first()).toBeVisible();
     await expect(page.getByText("Contagem refeita após conferência física.").first()).toBeVisible();
@@ -84,7 +85,8 @@ test.describe("Fechamento do Dono", () => {
     await expect(page.getByRole("heading", { name: "Fechamento · Centro" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Fechamento · Jardim Juliana" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Fechamento · Magalhães" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Envios de hoje" })).toHaveCount(3);
+    await expect(page.getByRole("heading", { name: "Envios de hoje" })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "Ver envios de hoje nesta Loja" })).toHaveCount(3);
     await expect(page.getByRole("combobox", { name: "Loja" })).toHaveCount(1);
   });
 

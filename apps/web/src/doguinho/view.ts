@@ -1,4 +1,5 @@
 import type { Actor, EstoqueView, FechamentoStatus, Permission, Produto, QuantidadeLinha } from "./types";
+import { FILTRO_TODAS } from "./workspace-filtro";
 
 export function actorCan(actor: Actor, permission: Permission): boolean {
   return actor.isDono || actor.permissions.includes(permission);
@@ -10,6 +11,10 @@ export function homePath(actor: Pick<Actor, "isDono">): "/dashboard" | "/fechame
 
 export function fechamentoEhFormulario(actor: Pick<Actor, "isDono">): boolean {
   return !actor.isDono;
+}
+
+export function relatorioIncluiTimeline(filtro: string): boolean {
+  return filtro !== FILTRO_TODAS;
 }
 
 export function linhasOficiaisDoDia(

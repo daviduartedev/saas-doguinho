@@ -94,7 +94,12 @@ export type Store = {
 
   listRascunhosOnDay: (organizationId: string, calendarDay: string) => Promise<StoredRascunho[]>;
   listSubmissionsByOrg: (organizationId: string) => Promise<Submission[]>;
+  listSubmissionsSinceByOrg: (organizationId: string, calendarDay: string) => Promise<Submission[]>;
   listSubmissionsOnDayByOrg: (organizationId: string, calendarDay: string) => Promise<Submission[]>;
+  listSubmissionsPage: (
+    lojaId: string,
+    input: { offset: number; limit: number },
+  ) => Promise<{ rows: Submission[]; total: number }>;
 
   insertSession: (row: StoredSession) => Promise<void>;
   getSession: (token: string) => Promise<StoredSession | null>;
