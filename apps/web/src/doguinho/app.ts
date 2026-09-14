@@ -1,4 +1,5 @@
-import { calendarDay, isoNow } from "./clock";
+import { addCalendarDays, calendarDay, isoNow } from "./clock";
+import { DASHBOARD_HISTORY_DAYS } from "./constants";
 import {
   AuthFailedError,
   ConflictError,
@@ -40,7 +41,10 @@ import type {
   Submission,
   UnidadeMedida,
   Usuario,
+  RelatorioLoja,
+  HistoricoPagina,
 } from "./types";
+import { linhasOficiaisDoDia } from "./view";
 
 export const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
 const MIN_PASSWORD = 8;
@@ -106,7 +110,12 @@ export type DoguinhoApp = {
   ) => Promise<void>;
   enviar: (actor: Actor, input: EnviarInput) => Promise<Submission>;
   historico: (actor: Actor, input: { lojaId: string }) => Promise<HistoryRow[]>;
+  historicoPagina: (
+    actor: Actor,
+    input: { lojaId: string; page: number; per: number },
+  ) => Promise<HistoricoPagina>;
   enviosDoDia: (actor: Actor, input: { lojaId: string }) => Promise<HistoryRow[]>;
+  relatoriosDoDia: (actor: Actor) => Promise<RelatorioLoja[]>;
   dashboard: (actor: Actor) => Promise<Dashboard>;
 };
 
@@ -314,42 +323,47 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
     return Object.fromEntries(produtos.map((produto) => [produto.id, produto.nome]));
   }
 
+  function historyFrom(
+    submissions: Submission[],
+    users: StoredUser[],
+    produtos: Produto[],
+  ): HistoryRow[] {
+    const nomes = new Map(users.map((user) => [user.id, user.nome]));
+    const produtoNomes = produtoNomesFrom(produtos);
+    return submissions.map((submission) => ({
+      submission,
+      usuarioNome: nomes.get(submission.usuarioId) ?? "Usuário",
+      produtoNomes,
+    }));
+  }
+
   async function historyRows(lojaId: string): Promise<HistoryRow[]> {
     const [submissions, users, produtos] = await Promise.all([
       deps.store.listSubmissions(lojaId),
       deps.store.listUsers(organizationId),
       deps.store.listProdutos(organizationId),
     ]);
-    const nomes = new Map(users.map((user) => [user.id, user.nome]));
-    const produtoNomes = produtoNomesFrom(produtos);
-    return [...submissions]
-      .sort((a, b) => (a.enviadoEm < b.enviadoEm ? 1 : -1))
-      .map((submission) => ({
-        submission,
-        usuarioNome: nomes.get(submission.usuarioId) ?? "Usuário",
-        produtoNomes,
-      }));
+    return historyFrom(
+      [...submissions].sort((a, b) => (a.enviadoEm < b.enviadoEm ? 1 : -1)),
+      users,
+      produtos,
+    );
   }
 
   async function historyByLoja(lojas: Loja[], produtos?: Produto[]): Promise<Map<string, HistoryRow[]>> {
+    const since = addCalendarDays(calendarDay(deps.clock), -(DASHBOARD_HISTORY_DAYS - 1));
     const [submissions, users, catalogo] = await Promise.all([
-      deps.store.listSubmissionsByOrg(organizationId),
+      deps.store.listSubmissionsSinceByOrg(organizationId, since),
       deps.store.listUsers(organizationId),
       produtos ? Promise.resolve(produtos) : deps.store.listProdutos(organizationId),
     ]);
-    const nomes = new Map(users.map((user) => [user.id, user.nome]));
-    const produtoNomes = produtoNomesFrom(catalogo);
     const visiveis = new Set(lojas.map((loja) => loja.id));
     const grouped = new Map<string, HistoryRow[]>();
     for (const loja of lojas) grouped.set(loja.id, []);
     const ordered = [...submissions].sort((a, b) => (a.enviadoEm < b.enviadoEm ? 1 : -1));
-    for (const submission of ordered) {
-      if (!visiveis.has(submission.lojaId)) continue;
-      grouped.get(submission.lojaId)!.push({
-        submission,
-        usuarioNome: nomes.get(submission.usuarioId) ?? "Usuário",
-        produtoNomes,
-      });
+    for (const row of historyFrom(ordered, users, catalogo)) {
+      if (!visiveis.has(row.submission.lojaId)) continue;
+      grouped.get(row.submission.lojaId)!.push(row);
     }
     return grouped;
   }
@@ -907,6 +921,20 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
       return historyRows(input.lojaId);
     },
 
+    async historicoPagina(actor, input) {
+      // ASVS 8.2.1 / 8.3.1: same Loja allowlist and read_history as historico.
+      await requireLoja(actor, input.lojaId);
+      requirePermission(actor, "read_history");
+      const per = Number.isInteger(input.per) && input.per > 0 ? input.per : 8;
+      const page = Number.isInteger(input.page) && input.page > 0 ? input.page : 1;
+      const [paged, users, produtos] = await Promise.all([
+        deps.store.listSubmissionsPage(input.lojaId, { offset: (page - 1) * per, limit: per }),
+        deps.store.listUsers(organizationId),
+        deps.store.listProdutos(organizationId),
+      ]);
+      return { items: historyFrom(paged.rows, users, produtos), total: paged.total };
+    },
+
     async enviosDoDia(actor, input) {
       // ASVS 4.1.1 / 4.2.1: same Loja scope and read_history as historico.
       await requireLoja(actor, input.lojaId);
@@ -929,6 +957,20 @@ export function createDoguinhoApp(deps: AppDeps): DoguinhoApp {
           usuarioNome: nomes.get(submission.usuarioId) ?? "Usuário",
           produtoNomes,
         }));
+    },
+
+    async relatoriosDoDia(actor) {
+      // ASVS 8.2.1 / 8.4.1: Estoque of visible Lojas only; no day timeline in this payload.
+      requirePermission(actor, "read_estoque");
+      const lojas = lojasVisiveis(actor, await deps.store.listLojas(organizationId));
+      const produtos = await deps.store.listProdutos(organizationId);
+      const catalogo = produtos.filter((produto) => !produto.excluido);
+      const colunas = await statusDasLojas(lojas, produtos);
+      return colunas.map(({ loja, snap }) => ({
+        loja,
+        produtos: catalogo,
+        linhas: linhasOficiaisDoDia(snap, catalogo),
+      }));
     },
 
     async dashboard(actor) {

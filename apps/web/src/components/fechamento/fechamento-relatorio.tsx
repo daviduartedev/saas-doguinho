@@ -3,6 +3,7 @@ import { FechamentoExportAcoes } from "@/components/fechamento/fechamento-export
 import { EnviosLista } from "@/components/historico/envios-lista";
 import { ListingPager } from "@/components/ui/pager";
 import { paginate } from "@/lib/pagination";
+import Link from "next/link";
 
 export function FechamentoRelatorio({
   lojaId,
@@ -15,6 +16,7 @@ export function FechamentoRelatorio({
   lojaFiltro,
   tituloTag = "h1",
   intro = true,
+  mostrarTimeline = true,
 }: {
   lojaId: string;
   lojaNome: string;
@@ -26,6 +28,7 @@ export function FechamentoRelatorio({
   lojaFiltro?: string;
   tituloTag?: "h1" | "h2";
   intro?: boolean;
+  mostrarTimeline?: boolean;
 }) {
   const ativos = produtos.filter((produto) => produto.ativo);
   const listing = paginate(ativos, page, per);
@@ -108,19 +111,30 @@ export function FechamentoRelatorio({
         </>
       )}
 
-      <section className="mt-10">
-        <EnviosTitulo className="font-display text-xl font-bold text-ink">Envios de hoje</EnviosTitulo>
-        <p className="mt-2 max-w-2xl text-[15px] text-steam">
-          Quem enviou nesta Loja hoje. O Histórico guarda todos os dias.
+      {mostrarTimeline ? (
+        <section className="mt-10">
+          <EnviosTitulo className="font-display text-xl font-bold text-ink">Envios de hoje</EnviosTitulo>
+          <p className="mt-2 max-w-2xl text-[15px] text-steam">
+            Quem enviou nesta Loja hoje. O Histórico guarda todos os dias.
+          </p>
+          {envios.length === 0 ? (
+            <p className="mt-4 text-sm text-steam">Nenhum envio hoje nesta Loja.</p>
+          ) : (
+            <div className="mt-4">
+              <EnviosLista rows={envios} />
+            </div>
+          )}
+        </section>
+      ) : (
+        <p className="mt-6 text-sm text-steam">
+          <Link
+            href={`/fechamento?loja=${lojaId}`}
+            className="font-semibold text-ketchup hover:text-ketchup-hot"
+          >
+            Ver envios de hoje nesta Loja
+          </Link>
         </p>
-        {envios.length === 0 ? (
-          <p className="mt-4 text-sm text-steam">Nenhum envio hoje nesta Loja.</p>
-        ) : (
-          <div className="mt-4">
-            <EnviosLista rows={envios} />
-          </div>
-        )}
-      </section>
+      )}
     </section>
   );
 }

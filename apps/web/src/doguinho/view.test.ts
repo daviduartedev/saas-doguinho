@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { fechamentoEhFormulario, homePath, linhasOficiaisDoDia, statusRelatorioDono } from "./view";
+import { FILTRO_TODAS } from "./workspace-filtro";
+import {
+  fechamentoEhFormulario,
+  homePath,
+  linhasOficiaisDoDia,
+  relatorioIncluiTimeline,
+  statusRelatorioDono,
+} from "./view";
 
 describe("homePath", () => {
   it("manda o Dono ao Dashboard", () => {
@@ -51,5 +58,15 @@ describe("statusRelatorioDono", () => {
   it("só marca Enviado quando já houve envio hoje", () => {
     expect(statusRelatorioDono({ exigeJustificativa: true })).toBe("enviado");
     expect(statusRelatorioDono({ exigeJustificativa: false })).toBeNull();
+  });
+});
+
+describe("relatorioIncluiTimeline", () => {
+  it("omite a timeline quando o Dono pede Todas as Lojas", () => {
+    expect(relatorioIncluiTimeline(FILTRO_TODAS)).toBe(false);
+  });
+
+  it("traz a timeline quando o filtro é uma Loja", () => {
+    expect(relatorioIncluiTimeline("loja-centro")).toBe(true);
   });
 });

@@ -196,6 +196,10 @@ export async function createPostgresStore(url: string): Promise<Store> {
       const rows = await db()`SELECT * FROM submissions WHERE organization_id = ${organizationId} ORDER BY enviado_em`;
       return rows.map(mapSubmission);
     },
+    async listSubmissionsSinceByOrg(organizationId, calendarDay) {
+      const rows = await db()`SELECT * FROM submissions WHERE organization_id = ${organizationId} AND calendar_day >= ${calendarDay} ORDER BY enviado_em`;
+      return rows.map(mapSubmission);
+    },
     async submissionsOnDay(lojaId, calendarDay) {
       const rows = await db()`SELECT * FROM submissions WHERE loja_id = ${lojaId} AND calendar_day = ${calendarDay} ORDER BY enviado_em`;
       return rows.map(mapSubmission);
@@ -203,6 +207,12 @@ export async function createPostgresStore(url: string): Promise<Store> {
     async listSubmissionsOnDayByOrg(organizationId, calendarDay) {
       const rows = await db()`SELECT * FROM submissions WHERE organization_id = ${organizationId} AND calendar_day = ${calendarDay} ORDER BY enviado_em`;
       return rows.map(mapSubmission);
+    },
+    async listSubmissionsPage(lojaId, input) {
+      const counted = await db()`SELECT COUNT(*)::int AS n FROM submissions WHERE loja_id = ${lojaId}`;
+      const total = Number(counted[0]?.n ?? 0);
+      const rows = await db()`SELECT * FROM submissions WHERE loja_id = ${lojaId} ORDER BY enviado_em DESC LIMIT ${input.limit} OFFSET ${input.offset}`;
+      return { rows: rows.map(mapSubmission), total };
     },
     async produtoHasHistory(produtoId) {
       const rows = await db()`SELECT 1 FROM submissions WHERE linhas::text LIKE ${"%" + produtoId + "%"} LIMIT 1`;
