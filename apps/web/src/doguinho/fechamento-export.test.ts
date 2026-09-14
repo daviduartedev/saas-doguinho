@@ -115,6 +115,16 @@ describe("nomeArquivoFechamento", () => {
   });
 });
 
+describe("montarPdfFechamento", () => {
+  it("pinta cabeçalho ketchup e colunas do listing no PDF", () => {
+    const pdf = montarPdfFechamento(montarPlanilhaFechamento([secao("Centro", 13)])).toString("utf8");
+    expect(pdf).toContain("0.89 0.11 0.14");
+    expect(pdf).toContain("Fechamento");
+    expect(pdf).toContain("Centro");
+    expect(pdf).toContain("Pão");
+  });
+});
+
 describe("arquivos gerados", () => {
   it("grava os nomes das Lojas em texto no Excel e no PDF", () => {
     const rows = montarPlanilhaFechamento([

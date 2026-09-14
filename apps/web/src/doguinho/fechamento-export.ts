@@ -214,35 +214,180 @@ function textoDasCelulas(rows: CelulaPlanilha[][]): string {
     .join("\n");
 }
 
-export function montarPdfFechamento(rows: CelulaPlanilha[][]): Buffer {
-  const linhas = textoDasCelulas(rows).split("\n");
-  const pages: string[][] = [];
-  const porPagina = 48;
-  for (let i = 0; i < linhas.length; i += porPagina) {
-    pages.push(linhas.slice(i, i + porPagina));
+type PdfSecao = {
+  lojaNome: string;
+  produtos: Array<{ produto: string; unidade: string; quantidade: string }>;
+  extras: string[];
+};
+
+function parseSecoesPdf(rows: CelulaPlanilha[][]): PdfSecao[] {
+  const secoes: PdfSecao[] = [];
+  let atual: PdfSecao | null = null;
+  let emProdutos = false;
+
+  for (const row of rows) {
+    if (row.length === 0) {
+      emProdutos = false;
+      continue;
+    }
+    if (row[0] === "Fechamento" && row.length >= 2) {
+      atual = { lojaNome: String(row[1]), produtos: [], extras: [] };
+      secoes.push(atual);
+      emProdutos = false;
+      continue;
+    }
+    if (!atual) continue;
+
+    if (row[0] === "Produto" && row[1] === "Unidade") {
+      emProdutos = true;
+      continue;
+    }
+    if (emProdutos && row.length === 3) {
+      atual.produtos.push({
+        produto: String(row[0]),
+        unidade: String(row[1]),
+        quantidade: String(row[2]),
+      });
+      continue;
+    }
+    emProdutos = false;
+    atual.extras.push(row.map((celula) => String(celula)).join(" "));
   }
-  if (pages.length === 0) pages.push([""]);
+
+  return secoes;
+}
+
+function subheadSecao(secao: PdfSecao): string {
+  const status = new Set<string>();
+  for (const linha of secao.extras) {
+    if (linha.startsWith("Correção")) status.add("Correção");
+    if (linha.startsWith("Fechamento") && linha !== "Envios de hoje") status.add("Fechamento");
+  }
+  const partes = [secao.lojaNome];
+  if (status.size > 0) partes.push([...status].join(", "));
+  return partes.join(" · ");
+}
+
+const PDF_PAGE_HEIGHT = 792;
+const PDF_HEADER_TOP = 742;
+const PDF_CONTENT_TOP = 688;
+const PDF_FOOTER_Y = 30;
+const PDF_LINE_HEIGHT = 14;
+const PDF_COL_PRODUTO = 50;
+const PDF_COL_UNIDADE = 220;
+const PDF_COL_QUANTIDADE = 360;
+
+function pdfTextoAbsoluto(x: number, y: number, tamanho: number, texto: string): string {
+  return `BT\n/F1 ${tamanho} Tf\n1 0 0 1 ${x} ${y} Tm\n(${pdfEscape(texto)}) Tj\nET`;
+}
+
+function pdfBarraCabecalho(): string {
+  return `0.89 0.11 0.14 rg\n0 ${PDF_HEADER_TOP} 612 50 re f\n0 0 0 rg`;
+}
+
+function pdfTituloCabecalho(): string {
+  return `1 1 1 rg\n${pdfTextoAbsoluto(50, 755, 18, "Fechamento")}\n0 0 0 rg`;
+}
+
+function pdfLinhaProduto(
+  y: number,
+  produto: string,
+  unidade: string,
+  quantidade: string,
+): string {
+  return [
+    "BT",
+    "/F1 10 Tf",
+    `1 0 0 1 ${PDF_COL_PRODUTO} ${y} Tm`,
+    `(${pdfEscape(produto)}) Tj`,
+    `1 0 0 1 ${PDF_COL_UNIDADE} ${y} Tm`,
+    `(${pdfEscape(unidade)}) Tj`,
+    `1 0 0 1 ${PDF_COL_QUANTIDADE} ${y} Tm`,
+    `(${pdfEscape(quantidade)}) Tj`,
+    "ET",
+  ].join("\n");
+}
+
+function pdfColunasCabecalho(y: number): string {
+  return pdfLinhaProduto(y, "Produto", "Unidade", "Quantidade restante");
+}
+
+type PdfPaginaEmConstrucao = { ops: string[]; y: number; subhead: string | null };
+
+function pdfNovaPagina(paginas: PdfPaginaEmConstrucao[], subhead: string | null): PdfPaginaEmConstrucao {
+  const pagina: PdfPaginaEmConstrucao = { ops: [pdfBarraCabecalho(), pdfTituloCabecalho()], y: PDF_CONTENT_TOP, subhead };
+  paginas.push(pagina);
+  return pagina;
+}
+
+function pdfGarantirEspaco(
+  paginas: PdfPaginaEmConstrucao[],
+  pagina: PdfPaginaEmConstrucao,
+  altura: number,
+  subhead: string | null,
+): PdfPaginaEmConstrucao {
+  if (pagina.y - altura < PDF_FOOTER_Y + PDF_LINE_HEIGHT) {
+    return pdfNovaPagina(paginas, subhead);
+  }
+  return pagina;
+}
+
+function montarConteudoPdf(secoes: PdfSecao[]): string[] {
+  const paginas: PdfPaginaEmConstrucao[] = [];
+  let pagina = pdfNovaPagina(paginas, null);
+
+  if (secoes.length === 0) return paginas.map((item) => item.ops.join("\n"));
+
+  for (const secao of secoes) {
+    const subhead = subheadSecao(secao);
+
+    pagina = pdfGarantirEspaco(paginas, pagina, PDF_LINE_HEIGHT * 3, subhead);
+    pagina.ops.push(pdfTextoAbsoluto(50, 725, 12, subhead));
+    pagina.y = 705;
+    pagina.ops.push(pdfColunasCabecalho(pagina.y));
+    pagina.y -= PDF_LINE_HEIGHT;
+
+    for (const produto of secao.produtos) {
+      pagina = pdfGarantirEspaco(paginas, pagina, PDF_LINE_HEIGHT, subhead);
+      pagina.ops.push(
+        pdfLinhaProduto(pagina.y, produto.produto, produto.unidade, produto.quantidade),
+      );
+      pagina.y -= PDF_LINE_HEIGHT;
+    }
+
+    for (const linha of secao.extras) {
+      pagina = pdfGarantirEspaco(paginas, pagina, PDF_LINE_HEIGHT, subhead);
+      pagina.ops.push(pdfTextoAbsoluto(50, pagina.y, 10, linha));
+      pagina.y -= PDF_LINE_HEIGHT;
+    }
+
+    pagina.y -= PDF_LINE_HEIGHT / 2;
+  }
+
+  const total = paginas.length;
+  return paginas.map((item, index) => {
+    const rodape = pdfTextoAbsoluto(50, PDF_FOOTER_Y, 9, `Página ${index + 1} de ${total}`);
+    return [...item.ops, rodape].join("\n");
+  });
+}
+
+export function montarPdfFechamento(rows: CelulaPlanilha[][]): Buffer {
+  const secoes = parseSecoesPdf(rows);
+  const pageStreams = montarConteudoPdf(secoes);
+  if (pageStreams.length === 0) pageStreams.push(`${pdfBarraCabecalho()}\n${pdfTituloCabecalho()}`);
 
   const objects: string[] = [];
   objects.push("<< /Type /Catalog /Pages 2 0 R >>");
-  const pageIds = pages.map((_, index) => 3 + index * 2);
+  const pageIds = pageStreams.map((_, index) => 3 + index * 2);
   objects.push(
-    `<< /Type /Pages /Kids [${pageIds.map((id) => `${id} 0 R`).join(" ")}] /Count ${pages.length} >>`,
+    `<< /Type /Pages /Kids [${pageIds.map((id) => `${id} 0 R`).join(" ")}] /Count ${pageStreams.length} >>`,
   );
 
-  pages.forEach((pageLines, index) => {
+  pageStreams.forEach((ops, index) => {
     const pageId = 3 + index * 2;
     const contentId = pageId + 1;
-    const ops = [
-      "BT",
-      "/F1 10 Tf",
-      "50 770 Td",
-      "14 TL",
-      ...pageLines.map((linha) => `(${pdfEscape(linha)}) Tj T*`),
-      "ET",
-    ].join("\n");
     objects.push(
-      `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents ${contentId} 0 R /Resources << /Font << /F1 ${3 + pages.length * 2} 0 R >> >> >>`,
+      `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 ${PDF_PAGE_HEIGHT}] /Contents ${contentId} 0 R /Resources << /Font << /F1 ${3 + pageStreams.length * 2} 0 R >> >> >>`,
     );
     objects.push(`<< /Length ${Buffer.byteLength(ops, "latin1")} >>\nstream\n${ops}\nendstream`);
   });
