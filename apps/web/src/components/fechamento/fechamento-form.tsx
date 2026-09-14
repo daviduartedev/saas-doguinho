@@ -194,7 +194,7 @@ export function FechamentoForm({
         <div className="sticky bottom-[var(--nav-end)] mt-5 flex flex-wrap justify-end gap-2 bg-paper py-3">
           <Button
             type="button"
-            variant="outline"
+            variant="counter"
             size="sm"
             pending={ctaMostraSpinner(ativo, "rascunho")}
             disabled={ctaDesabilitado(ativo, ativos.length === 0)}

@@ -56,7 +56,7 @@ Loading: skeleton bones for page content only. The awning nav stays mounted in t
 ## Components
 
 - Brand lockup: owl + boxes + laptop + checklist, wordmark Doguinho do Coruja. Same PNG on login card and sidebar header, on the surface behind it (no fake login screenshot).
-- Button: Mantine, ketchup filled. Default 44px h. Form CTAs (`Guardar rascunho`, `Enviar fechamento`) use size sm and sit right-aligned, not full-width. Spinner + disabled while the request is in flight.
+- Button: Mantine filled. Primary ketchup. Destructive ketchup-hot. Neutral counter. Default 44px. Icon-only actions use `aria-label`. Select trigger `gap-4` so the chevron never kisses the label. Form CTAs always have a fill. Spinner only on the in-flight CTA.
 - Input: darker `--control` inset · 10px radius · ketchup focus ring
 - Select open/checked: ketchup fill or ketchup text, never a gray pill
 - Nav active: ketchup-hot + pena

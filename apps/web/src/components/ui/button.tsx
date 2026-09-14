@@ -9,6 +9,8 @@ const buttonVariants = cva("", {
   variants: {
     variant: {
       primary: "",
+      counter: "",
+      danger: "",
       outline: "",
       ghost: "",
       awning: "",
@@ -17,7 +19,7 @@ const buttonVariants = cva("", {
       default: "h-11",
       sm: "",
       lg: "",
-      icon: "!h-10 !w-10 !p-0",
+      icon: "!h-11 !w-11 !p-0",
     },
   },
   defaultVariants: {
@@ -53,17 +55,22 @@ export function Button({
   const busy = pending || Boolean(disabled);
   const outline = variant === "outline";
   const ghost = variant === "ghost";
+  const counter = variant === "counter";
+  const danger = variant === "danger";
 
   return (
     <MantineButton
       type={type}
       variant={mantineVariant(variant)}
       size={mantineSize(size)}
-      color={outline || ghost ? undefined : "ketchup"}
+      color={outline || ghost ? undefined : danger ? "ketchup-hot" : "ketchup"}
       className={cn(buttonVariants({ variant, size }), className)}
       disabled={busy}
       loading={pending}
-      loaderProps={{ type: "oval", color: outline || ghost ? "var(--ink)" : "white" }}
+      loaderProps={{
+        type: "oval",
+        color: outline || ghost || counter ? "var(--ink)" : "white",
+      }}
       styles={{
         root: outline
           ? {
@@ -76,7 +83,17 @@ export function Button({
                 background: "transparent",
                 color: "inherit",
               }
-            : undefined,
+            : counter
+              ? {
+                  background: "var(--counter)",
+                  color: "var(--ink)",
+                }
+              : danger
+                ? {
+                    background: "var(--ketchup-hot)",
+                    color: "white",
+                  }
+                : undefined,
       }}
       {...props}
     >

@@ -42,6 +42,7 @@ test("lista de Produtos tem Excluir e some o Produto sem histórico", async ({ p
   await page.waitForLoadState("networkidle");
   const linha = await linhaProduto(page, nome);
   await expect(linha.getByRole("button", { name: "Excluir" })).toBeVisible();
+  page.on("dialog", (d) => d.accept());
   await linha.getByRole("button", { name: "Excluir" }).click();
   await page.waitForLoadState("networkidle");
 
